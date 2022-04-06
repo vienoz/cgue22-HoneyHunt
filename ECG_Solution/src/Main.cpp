@@ -13,6 +13,7 @@
 #include "Geometry.h"
 #include "Material.h"
 #include "Texture.h"
+#include <filesystem>
 
 /* --------------------------------------------- */
 // Prototypes
@@ -46,6 +47,8 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Load settings.ini
 	/* --------------------------------------------- */
+
+	std::cout<<std::filesystem::current_path()<<std::endl;
 
 	INIReader reader("assets/settings.ini");
 
@@ -137,11 +140,11 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	{
 		// Load shader(s)
-		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("C:/Users/niclas/OneDrive/Dokumente/TU/SS22/CG/SS22/template/assets/texture.vert", "C:/Users/niclas/OneDrive/Dokumente/TU/SS22/CG/SS22/template/assets/texture.frag");
+		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("assets/texture.vert", "assets/texture.frag");
 
 		// Create textures
-		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("C:/Users/niclas/OneDrive/Dokumente/TU/SS22/CG/SS22/template/assets/textures/wood_texture.dds");
-		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("C:/Users/niclas/OneDrive/Dokumente/TU/SS22/CG/SS22/template/assets/textures/tiles_diffuse.dds");
+		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds");
+		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds");
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture);

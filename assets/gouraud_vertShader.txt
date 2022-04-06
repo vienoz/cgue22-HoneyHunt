@@ -1,0 +1,134 @@
+#version 430 core
+
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 normalsIn;
+
+out vec3 LightingColor;
+
+layout (location = 0)uniform mat4 model;
+layout (location = 1)uniform mat4 view;
+layout (location = 2)uniform mat4 proj;
+
+//shading uniforms
+//light
+layout (location=3)uniform vec3 objColor;
+layout (location=4)uniform vec3 lightColor;
+layout (location=5)uniform vec3 lightPos;
+layout (location=6)uniform vec3 viewPos;
+layout (location=11)uniform float constant;
+layout (location=12)uniform float linear;
+layout (location=13)uniform float quadratic;
+
+//directional light
+layout (location=14)uniform vec3 directionColor;
+layout (location=15)uniform vec3 directionDirection;
+
+vec3 calcDirLight(vec3 viewDir, vec3 normal); 
+vec3 CalcPointLight(vec3 norma,  vec3 viewDir, vec3 positioN);  
+vec3 CalcSpotLight(vec3 norma, vec3 viewDir, vec3 positioN);
+
+//spotlight
+layout (location=18)uniform vec3 spotPos; 
+layout (location=16)uniform float cutOff; 
+layout (location=17)uniform vec3 spotDirection;    
+layout (location=19)uniform float outerCutOff; 
+layout (location=20)uniform bool displaySpot;
+
+//materials
+layout (location=7)uniform vec3 ambient;
+layout (location=8)uniform vec3 diffuse;
+layout (location=9)uniform vec3 specular;
+layout (location=10)uniform float shininess;
+
+void main(){
+	gl_Position =  proj * view * model * vec4(position, 1.0f); 
+
+	//gouraud shading
+	vec3 positioN = vec3(model * vec4(position, 1.0));			
+	vec3 norm = mat3(transpose(inverse(model))) * normalsIn; 		
+
+	vec3 viewDir = normalize(viewPos - positioN);
+
+	vec3 result = calcDirLight(viewDir, norm);
+
+	if(displaySpot){
+      	result += CalcSpotLight(norm, viewDir, positioN);
+        }
+      	
+	result += CalcPointLight(norm, viewDir, positioN);
+
+	LightingColor = vec3(result);
+}
+
+vec3 calcDirLight(vec3 viewDir, vec3 norma){
+     vec3 ambient = directionColor * ambient;
+
+      vec3 lightDir = normalize(-directionDirection);
+      float diff= max(dot(norma, lightDir), 0.0f);
+
+      vec3 diffuse = directionColor * (diffuse * diff);
+      vec3 reflectDir = reflect(-lightDir, norma);
+
+     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+     vec3 specular =  directionColor * specular * spec; 
+
+    return (ambient+ diffuse) * objColor + specular;
+}
+
+vec3 CalcPointLight(vec3 norma,  vec3 viewDir, vec3 positioN){
+    
+    vec3 ambient = lightColor * ambient;
+
+    vec3 lightDir = normalize(lightPos - positioN);
+
+    float diff = max(dot(norma, lightDir), 0.0);
+    vec3 diffuse = lightColor * (diffuse * diff);
+
+    vec3 reflectDir = reflect(-lightDir, norma);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+    vec3 specular =  lightColor * specular * spec; 
+
+    float distance = length(lightPos - positioN);
+    float attenuation = 1.0 / (constant + linear * distance + quadratic * (distance * distance));
+  
+
+   ambient *= attenuation; // not neccessary
+   diffuse *= attenuation;
+   specular *= attenuation;
+
+   return (ambient+ diffuse) * objColor + specular;
+}
+
+vec3 CalcSpotLight(vec3 norma, vec3 viewDir, vec3 positioN){
+
+
+    vec3 lightDir = normalize(spotPos - positioN);
+    float theta = dot(lightDir, normalize(-spotDirection));
+    float epsilon = (cutOff - outerCutOff);
+
+    float intense = clamp((theta - outerCutOff)/ epsilon , 0.0, 1.0);
+
+
+  
+      
+
+        //diffuse
+       float diff = max(dot(norma, lightDir), 0.0);
+       vec3 diffuse = lightColor * (diffuse * diff);
+
+       //spec
+       vec3 reflectDir = reflect(-lightDir, norma);
+       float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+       vec3 specular =  lightColor * specular * spec;
+
+
+        diffuse  *= intense;
+        specular *= intense;
+
+        float distance = length(lightPos - positioN);
+        float attenuation = 1.0 / (constant + linear * distance + quadratic * (distance * distance));
+        diffuse *= attenuation;
+        specular *= attenuation;
+  
+       return ( diffuse) * objColor + specular;
+}

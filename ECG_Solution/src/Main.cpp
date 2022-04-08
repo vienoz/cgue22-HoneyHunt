@@ -14,6 +14,8 @@
 #include "Material.h"
 #include "Texture.h"
 #include <filesystem>
+#include "PxPhysicsAPI.h"
+
 
 /* --------------------------------------------- */
 // Prototypes
@@ -162,6 +164,10 @@ int main(int argc, char** argv)
 		// Initialize lights
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 		PointLight pointL(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(1.0f, 0.4f, 0.1f));
+
+
+		void initPhysics();
+		initPhysics();
 
 
 
@@ -397,4 +403,61 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 	stringStream << ", ID = " << id << "]";
 
 	return stringStream.str();
+}
+
+
+physx::PxDefaultAllocator		gAllocator;
+physx::PxDefaultErrorCallback	gErrorCallback;
+
+physx::PxFoundation* gFoundation = nullptr;
+physx::PxPhysics* gPhysics = nullptr;
+
+physx::PxDefaultCpuDispatcher* gDispatcher = nullptr;
+physx::PxScene* gScene = nullptr;
+
+physx::PxMaterial* gMaterial = nullptr;
+physx::PxPvd* gPvd = nullptr;
+
+void initPhysics()
+{
+	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
+	if (!gFoundation) throw ("failed to create PxCreateFoundation");
+
+	// for visual debugger?
+	gPvd = PxCreatePvd(*gFoundation);
+	physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10); //what on earth...
+	gPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
+
+	//create physics
+	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(), true, gPvd);
+
+	//setup scene
+	physx::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
+	sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
+	gDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
+	sceneDesc.cpuDispatcher = gDispatcher;
+	sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
+	gScene = gPhysics->createScene(sceneDesc);
+
+	//scene client, aslo for debugger
+	physx::PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
+	if (pvdClient)
+	{
+		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
+		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
+		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
+	}
+
+	//create body 
+	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+
+	physx::PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, physx::PxPlane(0, 1, 0, 0), *gMaterial);
+	gScene->addActor(*groundPlane);
+	std::cout << "doing physicx" << std::endl;
+	//run sim
+
+	gScene->simulate(1.0f / 60.0f);
+	gScene->fetchResults(true);
+
+	
 }

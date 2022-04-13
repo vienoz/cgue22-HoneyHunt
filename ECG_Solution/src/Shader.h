@@ -6,6 +6,7 @@
 #include <iostream>
 #include <glm\glm.hpp>
 #include <glm\gtc\type_ptr.hpp>
+#include "PxPhysicsAPI.h"
 
 
 
@@ -166,6 +167,13 @@ public:
 	 * @param vec: the value to be set
 	 */
 	void setUniform(GLint location, const glm::vec4& vec);					//direct
+	/*!
+	 * Sets a 4D vector uniform in the shader
+	 * @param location: location ID of the uniform
+	 * @param vec: the value to be set
+	 */
+	void Shader::setUniform(GLint location, const physx::PxMat44& i);
+
 	/*!
 	 * Sets a uniform array property
 	 * @param arr: name of the uniform array

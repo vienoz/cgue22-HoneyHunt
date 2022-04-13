@@ -13,6 +13,7 @@
 #include <GL\glew.h>
 #include "Material.h"
 #include "Shader.h"
+#include "PxPhysicsAPI.h"
 
 /*!
  * Stores all data for a geometry object
@@ -34,6 +35,10 @@ struct GeometryData {
 	 * Vertex UV coordinates
 	 */
 	std::vector<glm::vec2> uvs;
+	/*!
+	 * Physical object
+	 */
+	physx::PxRigidActor* physObj;
 
 };
 
@@ -76,10 +81,15 @@ protected:
 	/*!
 	 * Model matrix of the object
 	 */
-	glm::mat4 _modelMatrix;
+	physx::PxMat44 _modelMatrix;
 
 
 public:
+
+	/*!
+	 * Physical object
+	 */
+	physx::PxRigidActor* physObj;
 
 	/*!
 	 * Geometry object constructor
@@ -123,7 +133,7 @@ public:
 	 * @param mass: mass of rigid body
 	 * @return all cube data
 	 */
-	static GeometryData createCubeGeometry(float width, float height, float depth, glm::vec3 initPos, float mass);
+	static GeometryData createCubeGeometry(float width, float height, float depth, glm::vec3 initPos, float mass, physx::PxMaterial* gMaterial, physx::PxPhysics* gPhysics);
 
 	/*!
 	 * Creates a cylinder geometry
@@ -140,6 +150,7 @@ public:
 	 * @param radius: radius of the sphere
 	 * @return all sphere data
 	 */
-	static GeometryData createSphereGeometry(unsigned int longitudeSegments, unsigned int latitudeSegments, float radius);
+	static GeometryData createSphereGeometry(unsigned int longitudeSegments, unsigned int latitudeSegments, float radius, glm::vec3 initPos, physx::PxMaterial* gMaterial, physx::PxPhysics* gPhysics);
 
+	physx::PxMat44 Geometry::glmMat4ToPhysxMat4(const glm::mat4& mat4);
 };

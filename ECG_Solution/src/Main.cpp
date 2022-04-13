@@ -13,7 +13,7 @@
 #include "Geometry.h"
 #include "Material.h"
 #include "Texture.h"
-#include <filesystem>
+//#include <filesystem>
 #include "PxPhysicsAPI.h"
 
 
@@ -39,6 +39,11 @@ static bool _dragging = false;
 static bool _strafing = false;
 static float _zoom = 15.0f;
 
+//declare Physx scene variable
+physx::PxScene* gScene = nullptr;
+physx::PxPhysics* gPhysics = nullptr;
+physx::PxMaterial* gMaterial = nullptr;
+
 
 /* --------------------------------------------- */
 // Main
@@ -50,7 +55,7 @@ int main(int argc, char** argv)
 	// Load settings.ini
 	/* --------------------------------------------- */
 
-	std::cout<<std::filesystem::current_path()<<std::endl;
+	//std::cout<<std::filesystem::current_path()<<std::endl;
 
 	INIReader reader("assets/settings.ini");
 
@@ -122,6 +127,9 @@ int main(int argc, char** argv)
 	// Init framework
 	/* --------------------------------------------- */
 
+	void initPhysics();
+	initPhysics();
+
 	if (!initFramework()) {
 		EXIT_WITH_ERROR("Failed to init framework");
 	}
@@ -154,9 +162,14 @@ int main(int argc, char** argv)
 
 		// Create geometry
 
-		Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 4.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 4.0f, 0.0f), 1.0f), woodTextureMaterial);
-		Geometry cylinder = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 1.0f, 0.0f), 0.0f), tileTextureMaterial);
-		Geometry sphere = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 1.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f), tileTextureMaterial);
+		Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 5.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 5.0f, 0.0f), 1.0f, gMaterial, gPhysics), woodTextureMaterial);
+		Geometry cube2 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 1.0f, 0.0f), 0.0f, gMaterial, gPhysics), tileTextureMaterial);
+		Geometry sphere = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 3.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f, glm::vec3(-1.5f, 3.0f, 0.0f), gMaterial, gPhysics), tileTextureMaterial);
+
+		gScene->addActor(*cube.physObj);
+		gScene->addActor(*cube2.physObj);
+		gScene->addActor(*sphere.physObj);
+
 
 		// Initialize camera
 		Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
@@ -164,13 +177,6 @@ int main(int argc, char** argv)
 		// Initialize lights
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 		PointLight pointL(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(1.0f, 0.4f, 0.1f));
-
-
-		void initPhysics();
-		initPhysics();
-
-
-
 
 
 		// Render loop
@@ -182,7 +188,12 @@ int main(int argc, char** argv)
 
 		glm::mat4 modelMatrix4phys;
 
+
+
 		while (!glfwWindowShouldClose(window)) {
+			gScene->simulate(1.0f / 60.0f); //elapsed time
+			gScene->fetchResults(true);
+
 
 			// Clear backbuffer
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -199,7 +210,7 @@ int main(int argc, char** argv)
 
 			// Render
 			cube.draw();
-			cylinder.draw();
+			cube2.draw();
 			sphere.draw();
 
 			// Compute frame time
@@ -410,13 +421,11 @@ physx::PxDefaultAllocator		gAllocator;
 physx::PxDefaultErrorCallback	gErrorCallback;
 
 physx::PxFoundation* gFoundation = nullptr;
-physx::PxPhysics* gPhysics = nullptr;
 
 physx::PxDefaultCpuDispatcher* gDispatcher = nullptr;
-physx::PxScene* gScene = nullptr;
 
-physx::PxMaterial* gMaterial = nullptr;
 physx::PxPvd* gPvd = nullptr;
+
 
 void initPhysics()
 {
@@ -430,6 +439,7 @@ void initPhysics()
 
 	//create physics
 	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(), true, gPvd);
+	if (!gPhysics) throw ("failed to create PxCreatePhysics");
 
 	//setup scene
 	physx::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
@@ -453,11 +463,14 @@ void initPhysics()
 
 	physx::PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, physx::PxPlane(0, 1, 0, 0), *gMaterial);
 	gScene->addActor(*groundPlane);
-	std::cout << "doing physicx" << std::endl;
+
+
+	//physx::PxRigidDynamic* aBoxActor = gPhysics->createRigidDynamic(physx::PxTransform(physx::PxVec3(5.0, 15.0, 5.0)));
+	//physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*aBoxActor,physx::PxBoxGeometry(2 / 2, 2 / 2, 2 / 2), *gMaterial);
+	///gScene->addActor(*aBoxActor);
+
+
+	std::cout << "doing physix" << std::endl;
 	//run sim
-
-	gScene->simulate(1.0f / 60.0f);
-	gScene->fetchResults(true);
-
 	
 }

@@ -7,8 +7,10 @@
 #include "Geometry.h"
 
 
-Geometry::Geometry(glm::mat4 modelMatrix, GeometryData& data, std::shared_ptr<Material> material) : _elements(data.indices.size()), _modelMatrix(modelMatrix), _material(material)
+Geometry::Geometry(glm::mat4 modelMatrix, GeometryData& data, std::shared_ptr<Material> material) : _elements(data.indices.size()), _modelMatrix(glmMat4ToPhysxMat4(modelMatrix)), _material(material)
 {
+	//physx object
+	physObj = data.physObj;
 
 	// create VAO
 	glGenVertexArrays(1, &_vao);
@@ -60,14 +62,14 @@ Geometry::~Geometry()
 }
 
 
+//TODO only call updateModelMatrix if physx object is dynamic
 void Geometry::draw()
 {
-	//updateModelMatrix();
+	updateModelMatrix();
 	Shader* shader = _material->getShader();
 	shader->use();
 
 	shader->setUniform(0, _modelMatrix);
-	//shader->setUniform("normalMatrix", glm::mat3(glm::transpose(glm::inverse(_modelMatrix)))); //dass is in meinem shader besser gelöst, da is es im shader drinnen ned hier
 	_material->setUniforms();
 
 	glBindVertexArray(_vao);
@@ -77,15 +79,15 @@ void Geometry::draw()
 
 void Geometry::transform(glm::mat4 transformation)
 {
-	_modelMatrix = transformation * _modelMatrix;
+	//_modelMatrix = transformation * _modelMatrix;
 }
 
 void Geometry::resetModelMatrix()
 {
-	_modelMatrix = glm::mat4(1);
+	//_modelMatrix = glm::mat4(1);
 }
 
-GeometryData Geometry::createCubeGeometry(float width, float height, float depth, glm::vec3 initPos, float mass)
+GeometryData Geometry::createCubeGeometry(float width, float height, float depth, glm::vec3 initPos, float mass, physx::PxMaterial* gMaterial, physx::PxPhysics* gPhysics)
 {
 	GeometryData data;
 
@@ -208,9 +210,12 @@ GeometryData Geometry::createCubeGeometry(float width, float height, float depth
 		20, 21, 22,
 		22, 23, 20
 	};
+
+	data.physObj = gPhysics->createRigidDynamic(physx::PxTransform(physx::PxVec3(initPos.x, initPos.y, initPos.z))); 
+	physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*data.physObj, physx::PxBoxGeometry(width / 2, height / 2, depth / 2), *gMaterial);
+
 	return std::move(data);
 }
-
 
 GeometryData Geometry::createCylinderGeometry(unsigned int segments, float height, float radius)
 {
@@ -280,7 +285,12 @@ GeometryData Geometry::createCylinderGeometry(unsigned int segments, float heigh
 	return std::move(data);
 }
 
-GeometryData Geometry::createSphereGeometry(unsigned int longitudeSegments, unsigned int latitudeSegments, float radius)
+void Geometry::updateModelMatrix() {
+	physx::PxMat44 pxMat(physObj->getGlobalPose());
+	_modelMatrix = pxMat;
+}
+
+GeometryData Geometry::createSphereGeometry(unsigned int longitudeSegments, unsigned int latitudeSegments, float radius, glm::vec3 initPos, physx::PxMaterial* gMaterial, physx::PxPhysics* gPhysics)
 {
 	GeometryData data;
 
@@ -329,5 +339,61 @@ GeometryData Geometry::createSphereGeometry(unsigned int longitudeSegments, unsi
 		}
 	}
 
+	data.physObj = gPhysics->createRigidDynamic(physx::PxTransform(physx::PxVec3(initPos.x, initPos.y, initPos.z)));
+	physx::PxShape* sphereShape = physx::PxRigidActorExt::createExclusiveShape(*data.physObj, physx::PxSphereGeometry(radius), *gMaterial);
+
 	return std::move(data);
+}
+
+void PhysXMat4ToglmMat4(const physx::PxMat44& mat4, glm::mat4& newMat)
+{
+
+	newMat[0][0] = mat4[0][0];
+	newMat[0][1] = mat4[0][1];
+	newMat[0][2] = mat4[0][2];
+	newMat[0][3] = mat4[0][3];
+
+	newMat[1][0] = mat4[1][0];
+	newMat[1][1] = mat4[1][1];
+	newMat[1][2] = mat4[1][2];
+	newMat[1][3] = mat4[1][3];
+
+	newMat[2][0] = mat4[2][0];
+	newMat[2][1] = mat4[2][1];
+	newMat[2][2] = mat4[2][2];
+	newMat[2][3] = mat4[2][3];
+
+	newMat[3][0] = mat4[3][0];
+	newMat[3][1] = mat4[3][1];
+	newMat[3][2] = mat4[3][2];
+	newMat[3][3] = mat4[3][3];
+
+}
+
+physx::PxMat44 Geometry::glmMat4ToPhysxMat4(const glm::mat4& mat4)
+{
+	physx::PxMat44 newMat;
+
+	newMat[0][0] = mat4[0][0];
+	newMat[0][1] = mat4[0][1];
+	newMat[0][2] = mat4[0][2];
+	newMat[0][3] = mat4[0][3];
+
+	newMat[1][0] = mat4[1][0];
+	newMat[1][1] = mat4[1][1];
+	newMat[1][2] = mat4[1][2];
+	newMat[1][3] = mat4[1][3];
+
+	newMat[2][0] = mat4[2][0];
+	newMat[2][1] = mat4[2][1];
+	newMat[2][2] = mat4[2][2];
+	newMat[2][3] = mat4[2][3];
+
+	newMat[3][0] = mat4[3][0];
+	newMat[3][1] = mat4[3][1];
+	newMat[3][2] = mat4[3][2];
+	newMat[3][3] = mat4[3][3];
+
+
+	return newMat;
 }

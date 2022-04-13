@@ -121,6 +121,10 @@ void Shader::setUniform(GLint location, const glm::mat4& i) {
 	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(i));
 }
 
+void Shader::setUniform(GLint location, const physx::PxMat44& i) {
+	glUniformMatrix4fv(location, 1, GL_FALSE, &(i[0].x));
+}
+
 void Shader::setUniform(GLint location, const glm::mat3& i) {
 	glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(i));
 }

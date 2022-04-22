@@ -26,7 +26,7 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL, PointLight& pointL);
+void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL);
 
 
 /* --------------------------------------------- */
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	{
 		// Load shader(s)
-		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("assets/texture.vert", "assets/texture.frag");
+		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("assets/texture_cel.vert.glsl", "assets/texture_cel.frag.glsl");
 
 		// Create textures
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds");
@@ -176,8 +176,6 @@ int main(int argc, char** argv)
 
 		// Initialize lights
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
-		PointLight pointL(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(1.0f, 0.4f, 0.1f));
-
 
 		// Render loop
 		float t = float(glfwGetTime());
@@ -206,7 +204,7 @@ int main(int argc, char** argv)
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging);
 
 			// Set per-frame uniforms
-			setPerFrameUniforms(textureShader.get(), camera, dirL, pointL);
+			setPerFrameUniforms(textureShader.get(), camera, dirL);
 
 			// Render
 			cube.draw();
@@ -242,18 +240,14 @@ int main(int argc, char** argv)
 }
 
 
-void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL, PointLight& pointL)
+void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL)
 {
 	shader->use();
 	shader->setUniform(1, camera.getViewMatrix());
 	shader->setUniform(2, camera.getProjMatrix());
-	shader->setUniform(11, camera.getPosition());
-
-	shader->setUniform(14, dirL.color);
-	shader->setUniform(15, dirL.direction);
-	shader->setUniform(4, pointL.color);
-	shader->setUniform(5, pointL.position);
-	shader->setUniform(7, pointL.attenuation);
+	shader->setUniform(3, camera.getPosition());
+	shader->setUniform(4, dirL.color);
+	shader->setUniform(5, dirL.direction);
 }
 
 

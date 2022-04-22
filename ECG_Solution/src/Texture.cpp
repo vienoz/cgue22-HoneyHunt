@@ -27,9 +27,9 @@ Texture::~Texture()
 }
 
 
-void Texture::bind(unsigned int unint) {
+void Texture::bind(unsigned int unit) {
 
 	//glUniform1i(10, texUnit);
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(GL_TEXTURE_2D, _texHandle);
 }

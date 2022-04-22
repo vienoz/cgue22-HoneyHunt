@@ -25,8 +25,8 @@ Shader* Material::getShader()
 
 void Material::setUniforms()
 {
-	_shader->setUniform(8, _materialCoefficients);
-	_shader->setUniform(9, _alpha);
+	_shader->setUniform(6, _materialCoefficients);
+	_shader->setUniform(7, _alpha);
 }
 
 /* --------------------------------------------- */

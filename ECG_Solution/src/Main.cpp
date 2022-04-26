@@ -27,6 +27,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL);
+glm::vec3 updateMovement();
+Camera camera;
 
 
 /* --------------------------------------------- */
@@ -38,11 +40,14 @@ static bool _culling = true;
 static bool _dragging = false;
 static bool _strafing = false;
 static float _zoom = 15.0f;
+bool keys[512];
 
 //declare Physx scene variable
 physx::PxScene* gScene = nullptr;
 physx::PxPhysics* gPhysics = nullptr;
 physx::PxMaterial* gMaterial = nullptr;
+
+std::vector<Geometry*> gameObjects;
 
 
 /* --------------------------------------------- */
@@ -154,7 +159,7 @@ int main(int argc, char** argv)
 
 		// Create textures
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds");
-		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds");
+		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/bee.dds");
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture);
@@ -164,15 +169,20 @@ int main(int argc, char** argv)
 
 		Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 5.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 5.0f, 0.0f), 1.0f, gMaterial, gPhysics), woodTextureMaterial);
 		Geometry cube2 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 1.0f, 0.0f), 0.0f, gMaterial, gPhysics), tileTextureMaterial);
-		Geometry sphere = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 3.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f, glm::vec3(-1.5f, 3.0f, 0.0f), gMaterial, gPhysics), tileTextureMaterial);
+		Geometry player = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 3.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f, glm::vec3(-1.5f, 3.0f, 0.0f), gMaterial, gPhysics), tileTextureMaterial);
+
+		gameObjects.push_back(&player);
+		gameObjects.push_back(&cube);
+		gameObjects.push_back(&cube2);
 
 		gScene->addActor(*cube.physObj);
 		gScene->addActor(*cube2.physObj);
-		gScene->addActor(*sphere.physObj);
+		gScene->addActor(*player.physObj);
+		
 
 
 		// Initialize camera
-		Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
+		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
 
 		// Initialize lights
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
@@ -189,7 +199,14 @@ int main(int argc, char** argv)
 
 
 		while (!glfwWindowShouldClose(window)) {
-			gScene->simulate(1.0f / 60.0f); //elapsed time
+
+			// Compute frame time
+			dt = t;
+			t = float(glfwGetTime());
+			dt = t - dt;
+			t_sum += dt;
+			
+			gScene->simulate(dt); //elapsed time
 			gScene->fetchResults(true);
 
 
@@ -201,21 +218,17 @@ int main(int argc, char** argv)
 
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
-			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging);
+			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement());
 
 			// Set per-frame uniforms
 			setPerFrameUniforms(textureShader.get(), camera, dirL);
 
 			// Render
-			cube.draw();
-			cube2.draw();
-			sphere.draw();
+			gameObjects[0]->draw();
+			gameObjects[1]->draw();
+			gameObjects[2]->draw();
+			
 
-			// Compute frame time
-			dt = t;
-			t = float(glfwGetTime());
-			dt = t - dt;
-			t_sum += dt;
 
 			// Swap buffers
 			glfwSwapBuffers(window);
@@ -278,22 +291,36 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	// F2 - Culling
 	// Esc - Exit
 
-	if (action != GLFW_RELEASE) return;
+	if (action == GLFW_PRESS && (key > 0 && key < 512)) {
+		keys[key] = true;
+	}
 
-	switch (key)
-	{
-	case GLFW_KEY_ESCAPE:
-		glfwSetWindowShouldClose(window, true);
-		break;
-	case GLFW_KEY_F1:
-		_wireframe = !_wireframe;
-		glPolygonMode(GL_FRONT_AND_BACK, _wireframe ? GL_LINE : GL_FILL);
-		break;
-	case GLFW_KEY_F2:
-		_culling = !_culling;
-		if (_culling) glEnable(GL_CULL_FACE);
-		else glDisable(GL_CULL_FACE);
-		break;
+	if (action == GLFW_RELEASE && (key > 0 && key < 512)) {
+		keys[key] = false;
+		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(.0, .0, .0), true);
+	}
+
+	switch (action) {
+
+	case GLFW_PRESS:
+
+		switch (key) {
+
+		case GLFW_KEY_ESCAPE:
+			glfwSetWindowShouldClose(window, true);
+			break;
+
+		case GLFW_KEY_F1:
+			_wireframe = !_wireframe;
+			glPolygonMode(GL_FRONT_AND_BACK, _wireframe ? GL_LINE : GL_FILL);
+			break;
+
+		case GLFW_KEY_F2:
+			_culling = !_culling;
+			if (_culling) glEnable(GL_CULL_FACE);
+			else glDisable(GL_CULL_FACE);
+			break;
+		}
 	}
 }
 
@@ -437,11 +464,13 @@ void initPhysics()
 
 	//setup scene
 	physx::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
-	sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
+	//sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
+	sceneDesc.gravity = physx::PxVec3(0.0f, .0f, 0.0f);
 	gDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
 	sceneDesc.cpuDispatcher = gDispatcher;
 	sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
 	gScene = gPhysics->createScene(sceneDesc);
+
 
 	//scene client, aslo for debugger
 	physx::PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
@@ -459,12 +488,38 @@ void initPhysics()
 	gScene->addActor(*groundPlane);
 
 
+
 	//physx::PxRigidDynamic* aBoxActor = gPhysics->createRigidDynamic(physx::PxTransform(physx::PxVec3(5.0, 15.0, 5.0)));
 	//physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*aBoxActor,physx::PxBoxGeometry(2 / 2, 2 / 2, 2 / 2), *gMaterial);
 	///gScene->addActor(*aBoxActor);
 
 
-	std::cout << "doing physix" << std::endl;
+	std::cout << "doing physx" << std::endl;
 	//run sim
+	
+}
+
+glm::vec3 updateMovement() {
+	glm::vec3 direction = glm::normalize(camera.getCameraFoward() + camera.getCameraRight());
+
+	if (keys[GLFW_KEY_W]) {
+		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(-camera.getCameraFoward().x, -camera.getCameraFoward().y, -camera.getCameraFoward().z), true);
+	}
+	if (keys[GLFW_KEY_A]) {
+		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(-camera.getCameraRight().x, -camera.getCameraRight().y, -camera.getCameraRight().z), true);
+	}
+	if (keys[GLFW_KEY_S]) {
+		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(camera.getCameraFoward().x, camera.getCameraFoward().y, camera.getCameraFoward().z), true);
+	}
+	if (keys[GLFW_KEY_D]) {
+		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(camera.getCameraRight().x, camera.getCameraRight().y, camera.getCameraRight().z), true);
+	}
+	if (keys[GLFW_KEY_SPACE]) {
+		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(.0, 1.0, .0), true);
+	}
+
+	physx::PxVec3 position = gameObjects[0]->physObj->getGlobalPose().p;
+
+	return glm::vec3(position.x, position.y, position.z);
 	
 }

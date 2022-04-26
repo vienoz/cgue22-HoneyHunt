@@ -11,6 +11,8 @@ Camera::Camera(float fov, float aspect, float near, float far, glm::vec3 positio
 
 }
 
+Camera::Camera(){}
+
 Camera::~Camera() {
 }
 
@@ -21,6 +23,7 @@ glm::vec3 Camera::getPosition() {
 glm::mat4 Camera::getViewMatrix() {
 	glm::vec3 zaxis = glm::normalize(_position - _target);                 //camerDirection
 	glm::vec3 xaxis = glm::normalize(glm::cross(glm::vec3(0.0, 1.0, 0.0), zaxis));        // normal of global y and straight foward is cameraRight/ camera
+	cameraX = xaxis;
 	glm::vec3 yaxis = glm::normalize(glm::cross(zaxis, xaxis));     // normal of right and straight foward is cameraUp/cameraY
 
 
@@ -45,7 +48,12 @@ glm::mat4 Camera::getProjMatrix() {
 	return _projMatrix;
 }
 
-void Camera::update(double mouseX, double mouseY, float zoom, bool dragging) {
+void Camera::setTarget(glm::vec3 newTarget) {
+	_target = newTarget;
+}
+
+void Camera::update(double mouseX, double mouseY, float zoom, bool dragging, glm::vec3 newTarget) {
+	setTarget(newTarget);
 	float cameraDistance = (glm::length(_position - _target));
 
 
@@ -81,4 +89,13 @@ void Camera::update(double mouseX, double mouseY, float zoom, bool dragging) {
 	_position.y = _target.y + zoom * -sin(glm::radians(_pitch)); //negative to achieve expected y movement
 	_position.z = _target.z + zoom * cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
 
+}
+
+glm::vec3 Camera::getCameraRight() {
+	return cameraX;
+}
+
+glm::vec3 Camera::getCameraFoward() {
+	return glm::normalize(_position - _target);
+	//return glm::normalize(glm::cross(cameraX, glm::vec3(0.0, 1.0, 0.0)));
 }

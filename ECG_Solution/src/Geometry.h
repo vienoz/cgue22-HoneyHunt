@@ -38,7 +38,7 @@ struct GeometryData {
 	/*!
 	 * Physical object
 	 */
-	physx::PxRigidActor* physObj;
+	physx::PxRigidBody* physObj;
 
 };
 
@@ -89,7 +89,7 @@ public:
 	/*!
 	 * Physical object
 	 */
-	physx::PxRigidActor* physObj;
+	physx::PxRigidBody* physObj;
 
 	/*!
 	 * Geometry object constructor

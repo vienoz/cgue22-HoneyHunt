@@ -18,6 +18,7 @@ protected:
 	float _yaw, _pitch;
 	glm::vec3 _position;
 	glm::vec3 _target;
+	glm::vec3 cameraX;
 
 public:
 	/*!
@@ -28,6 +29,8 @@ public:
 	 * @param far: far plane
 	 */
 	Camera(float fov, float aspect, float near, float far, glm::vec3 position, glm::vec3 target);
+
+	Camera();
 
 	~Camera();
 
@@ -53,5 +56,13 @@ public:
 	 * @param zoom: zoom multiplier
 	 * @param dragging: is the camera dragging
 	 */
-	void update(double mouseX, double mouseY, float zoom, bool dragging);
+	void update(double mouseX, double mouseY, float zoom, bool dragging, glm::vec3 newTarget);
+
+
+
+	void setTarget(glm::vec3 newTarget);
+
+	glm::vec3 getCameraRight();
+
+	glm::vec3 getCameraFoward();
 };

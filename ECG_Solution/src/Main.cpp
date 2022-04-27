@@ -210,6 +210,7 @@ int main(int argc, char** argv)
 			gScene->fetchResults(true);
 
 
+
 			// Clear backbuffer
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -228,6 +229,11 @@ int main(int argc, char** argv)
 			gameObjects[1]->draw();
 			gameObjects[2]->draw();
 			
+			//physx::PxOverlapBuffer hit;
+			//physx::PxQueryFilterData fd;
+			//fd.flags |= physx::PxQueryFlag::eANY_HIT; 
+			//bool status = gScene->overlap(physx::PxSphereGeometry(1.0f),physx::PxTransform(gameObjects[0]->physObj->getGlobalPose().p), hit);
+			//std::cout << status << std::endl;
 
 
 			// Swap buffers
@@ -517,12 +523,12 @@ glm::vec3 updateMovement() {
 	if (keys[GLFW_KEY_SPACE]) {
 		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(.0, 1.0, .0), true);
 	}
+	if (keys[GLFW_KEY_LEFT_SHIFT]) {
+		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(.0, -1.0, .0), true);
+	}
 
 
 	physx::PxVec3 position = gameObjects[0]->physObj->getGlobalPose().p;
 
 	return glm::vec3(position.x, position.y, position.z);
 }
-//TODO: diagonales movement, collision detection mit output
-// resolution 1280x768
-// readme im zip file

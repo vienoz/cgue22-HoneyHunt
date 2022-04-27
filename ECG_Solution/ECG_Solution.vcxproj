@@ -4,7 +4,7 @@
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\Material.cpp" />
-    <ClCompile Include="src\Shader.cpp" />
+    <ClCompile Include="src\ShaderNew.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Geometry.h" />
@@ -13,7 +13,7 @@
     <ClCompile Include="src\Main.cpp" />
     <ClInclude Include="src\Light.h" />
     <ClInclude Include="src\Material.h" />
-    <ClInclude Include="src\Shader.h" />
+    <ClInclude Include="src\ShaderNew.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\Utils.h" />
   </ItemGroup>
@@ -120,7 +120,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)external\physx\include;$(SolutionDir)external\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,8 +147,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)external\physx\include;$(SolutionDir)external\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <LanguageStandard>
-      </LanguageStandard>
+      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

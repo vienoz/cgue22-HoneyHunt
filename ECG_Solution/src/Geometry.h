@@ -12,7 +12,7 @@
 #include <glm\gtc\matrix_transform.hpp>
 #include <GL\glew.h>
 #include "Material.h"
-#include "Shader.h"
+#include "ShaderNew.h"
 #include "PxPhysicsAPI.h"
 
 /*!

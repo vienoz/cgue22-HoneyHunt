@@ -14,7 +14,7 @@
 /*!
  * Shader class that encapsulates all shader access
  */
-class Shader
+class ShaderNew
 {
 protected:
 	/*!
@@ -49,7 +49,7 @@ public:
 	/*!
 	 * Default constructor of a simple color shader
 	 */
-	Shader();
+	ShaderNew();
 
 	/*!
 	 * Shader constructor with specified vertex and fragment shader
@@ -57,9 +57,9 @@ public:
 	 * @param vs: path to the vertex shader
 	 * @param fs: path to the fragment shader
 	 */
-	Shader(std::string vs, std::string fs);
+	ShaderNew(std::string vs, std::string fs);
 
-	~Shader();
+	~ShaderNew();
 
 	/*!
 	 * Uses the shader with glUseProgram
@@ -172,7 +172,7 @@ public:
 	 * @param location: location ID of the uniform
 	 * @param vec: the value to be set
 	 */
-	void Shader::setUniform(GLint location, const physx::PxMat44& i);
+	void ShaderNew::setUniform(GLint location, const physx::PxMat44& i);
 
 	/*!
 	 * Sets a uniform array property

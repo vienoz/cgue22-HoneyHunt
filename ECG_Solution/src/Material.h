@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <glm/glm.hpp>
-#include "Shader.h"
+#include "ShaderNew.h"
 #include "Texture.h"
 
 
@@ -21,7 +21,7 @@ protected:
 	/*!
 	 * The shader used for rendering this material
 	 */
-	std::shared_ptr<Shader> _shader;
+	std::shared_ptr<ShaderNew> _shader;
 	/*!
 	 * The material's coefficients (x = ambient, y = diffuse, z = specular)
 	 */
@@ -39,14 +39,14 @@ public:
 	 * @param materialCoefficients: The material's coefficients (x = ambient, y = diffuse, z = specular)
 	 * @param alpha: Alpha value, i.e. the shininess constant
 	 */
-	Material(std::shared_ptr<Shader> shader, glm::vec3 materialCoefficients, float alpha);
+	Material(std::shared_ptr<ShaderNew> shader, glm::vec3 materialCoefficients, float alpha);
 
 	virtual ~Material();
 
 	/*!
 	 * @return The shader associated with this material
 	 */
-	Shader* getShader();
+	ShaderNew* getShader();
 
 	/*!
 	 * Sets this material's parameters as uniforms in the shader
@@ -74,7 +74,7 @@ public:
 	 * @param alpha: Alpha value, i.e. the shininess constant
 	 * @param diffuseTexture: The diffuse texture of this material
 	 */
-	TextureMaterial(std::shared_ptr<Shader> shader, glm::vec3 materialCoefficients, float alpha, std::shared_ptr<Texture> diffuseTexture);
+	TextureMaterial(std::shared_ptr<ShaderNew> shader, glm::vec3 materialCoefficients, float alpha, std::shared_ptr<Texture> diffuseTexture);
 
 	virtual ~TextureMaterial();
 

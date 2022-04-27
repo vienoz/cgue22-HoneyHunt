@@ -9,7 +9,7 @@
 #include <sstream>
 #include "Light.h"
 #include "Camera.h"
-#include "Shader.h"
+#include "ShaderNew.h"
 #include "Geometry.h"
 #include "Material.h"
 #include "Texture.h"
@@ -26,7 +26,7 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL);
+void setPerFrameUniforms(ShaderNew* shader, Camera& camera, DirectionalLight& dirL);
 glm::vec3 updateMovement();
 Camera camera;
 
@@ -155,7 +155,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	{
 		// Load shader(s)
-		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("assets/texture_cel.vert.glsl", "assets/texture_cel.frag.glsl");
+		std::shared_ptr<ShaderNew> textureShader = std::make_shared<ShaderNew>("assets/texture_cel.vert.glsl", "assets/texture_cel.frag.glsl");
 
 		// Create textures
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds");
@@ -253,7 +253,7 @@ int main(int argc, char** argv)
 }
 
 
-void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL)
+void setPerFrameUniforms(ShaderNew* shader, Camera& camera, DirectionalLight& dirL)
 {
 	shader->use();
 	shader->setUniform(1, camera.getViewMatrix());
@@ -503,7 +503,7 @@ glm::vec3 updateMovement() {
 	glm::vec3 direction = glm::normalize(camera.getCameraFoward() + camera.getCameraRight());
 
 	if (keys[GLFW_KEY_W]) {
-		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(-camera.getCameraFoward().x, -camera.getCameraFoward().y, -camera.getCameraFoward().z), true);
+		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(2*-camera.getCameraFoward().x, 2*-camera.getCameraFoward().y,2* -camera.getCameraFoward().z), true);
 	}
 	if (keys[GLFW_KEY_A]) {
 		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(-camera.getCameraRight().x, -camera.getCameraRight().y, -camera.getCameraRight().z), true);
@@ -518,8 +518,11 @@ glm::vec3 updateMovement() {
 		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(.0, 1.0, .0), true);
 	}
 
+
 	physx::PxVec3 position = gameObjects[0]->physObj->getGlobalPose().p;
 
 	return glm::vec3(position.x, position.y, position.z);
-	
 }
+//TODO: diagonales movement, collision detection mit output
+// resolution 1280x768
+// readme im zip file

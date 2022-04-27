@@ -66,7 +66,7 @@ Geometry::~Geometry()
 void Geometry::draw()
 {
 	updateModelMatrix();
-	Shader* shader = _material->getShader();
+	ShaderNew* shader = _material->getShader();
 	shader->use();
 
 	shader->setUniform(0, _modelMatrix);

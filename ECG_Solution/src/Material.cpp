@@ -9,7 +9,7 @@
 // Base material
 /* --------------------------------------------- */
 
-Material::Material(std::shared_ptr<Shader> shader, glm::vec3 materialCoefficients, float alpha)
+Material::Material(std::shared_ptr<ShaderNew> shader, glm::vec3 materialCoefficients, float alpha)
 	: _shader(shader), _materialCoefficients(materialCoefficients), _alpha(alpha)
 {
 }
@@ -18,7 +18,7 @@ Material::~Material()
 {
 }
 
-Shader* Material::getShader()
+ShaderNew* Material::getShader()
 {
 	return _shader.get();
 }
@@ -33,7 +33,7 @@ void Material::setUniforms()
 // Texture material
 /* --------------------------------------------- */
 
-TextureMaterial::TextureMaterial(std::shared_ptr<Shader> shader, glm::vec3 materialCoefficients, float alpha, std::shared_ptr<Texture> diffuseTexture)
+TextureMaterial::TextureMaterial(std::shared_ptr<ShaderNew> shader, glm::vec3 materialCoefficients, float alpha, std::shared_ptr<Texture> diffuseTexture)
 	: Material(shader, materialCoefficients, alpha), _diffuseTexture(diffuseTexture)
 {
 }

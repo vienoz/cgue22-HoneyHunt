@@ -1,6 +1,6 @@
-#include "Shader.h"
+#include "ShaderNew.h"
 
-unsigned int Shader::prepareShader(std::string vertPath, std::string fragPath) {
+unsigned int ShaderNew::prepareShader(std::string vertPath, std::string fragPath) {
 	//creates empty shader and returns handle
 	unsigned int vertShader = glCreateShader(GL_VERTEX_SHADER);
 	unsigned int fragShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -63,7 +63,7 @@ unsigned int Shader::prepareShader(std::string vertPath, std::string fragPath) {
 	glDeleteShader(fragShader);
 	return shaderProg;
 }
-std::string Shader::readFromFile(const std::string& filepath) {
+std::string ShaderNew::readFromFile(const std::string& filepath) {
 	std::stringstream result;
 	std::ifstream file(filepath);
 
@@ -84,59 +84,59 @@ std::string Shader::readFromFile(const std::string& filepath) {
 }
 
 
-GLint Shader::getUniformLocation(std::string uniform) {
+GLint ShaderNew::getUniformLocation(std::string uniform) {
 	return 1;
 }
 
-Shader::Shader() {
+ShaderNew::ShaderNew() {
 }
 
-Shader::Shader(std::string vs, std::string fs) {
+ShaderNew::ShaderNew(std::string vs, std::string fs) {
 	_handle = prepareShader(vs, fs);
 }
 
-Shader::~Shader() {
+ShaderNew::~ShaderNew() {
 }
 
-void Shader::use() {
+void ShaderNew::use() {
 	glUseProgram(_handle);
 }
 
-void Shader::unuse() {
+void ShaderNew::unuse() {
 }
 
-void Shader::setUniform(GLint location, const int i) {
+void ShaderNew::setUniform(GLint location, const int i) {
 	glUniform1i(location, i);
 }
 
-void Shader::setUniform(GLint location, const unsigned int i) {
+void ShaderNew::setUniform(GLint location, const unsigned int i) {
 	glUniform1ui(location, i);
 }
 
-void Shader::setUniform(GLint location, const float i) {
+void ShaderNew::setUniform(GLint location, const float i) {
 	glUniform1f(location, i);
 }
 
-void Shader::setUniform(GLint location, const glm::mat4& i) {
+void ShaderNew::setUniform(GLint location, const glm::mat4& i) {
 	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(i));
 }
 
-void Shader::setUniform(GLint location, const physx::PxMat44& i) {
+void ShaderNew::setUniform(GLint location, const physx::PxMat44& i) {
 	glUniformMatrix4fv(location, 1, GL_FALSE, &(i[0].x));
 }
 
-void Shader::setUniform(GLint location, const glm::mat3& i) {
+void ShaderNew::setUniform(GLint location, const glm::mat3& i) {
 	glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(i));
 }
 
-void Shader::setUniform(GLint location, const glm::vec2& i) {
+void ShaderNew::setUniform(GLint location, const glm::vec2& i) {
 	glUniform2f(location, i.x, i.y);
 }
 
-void Shader::setUniform(GLint location, const glm::vec3& i) {
+void ShaderNew::setUniform(GLint location, const glm::vec3& i) {
 	glUniform3f(location, i.x, i.y, i.z);
 }
 
-void Shader::setUniform(GLint location, const glm::vec4& i) {
+void ShaderNew::setUniform(GLint location, const glm::vec4& i) {
 	glUniform4f(location, i.w, i.x, i.y, i.z);
 }

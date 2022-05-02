@@ -13,8 +13,8 @@
 #include "Geometry.h"
 #include "Material.h"
 #include "Texture.h"
+#include "GamePhysx.cpp"
 //#include <filesystem>
-#include "PxPhysicsAPI.h"
 
 
 /* --------------------------------------------- */
@@ -42,10 +42,6 @@ static bool _strafing = false;
 static float _zoom = 15.0f;
 bool keys[512];
 
-//declare Physx scene variable
-physx::PxScene* gScene = nullptr;
-physx::PxPhysics* gPhysics = nullptr;
-physx::PxMaterial* gMaterial = nullptr;
 
 std::vector<Geometry*> gameObjects;
 
@@ -56,6 +52,7 @@ std::vector<Geometry*> gameObjects;
 
 int main(int argc, char** argv)
 {
+	GamePhysx phys;
 	/* --------------------------------------------- */
 	// Load settings.ini
 	/* --------------------------------------------- */
@@ -132,9 +129,6 @@ int main(int argc, char** argv)
 	// Init framework
 	/* --------------------------------------------- */
 
-	void initPhysics();
-	initPhysics();
-
 	if (!initFramework()) {
 		EXIT_WITH_ERROR("Failed to init framework");
 	}
@@ -167,17 +161,17 @@ int main(int argc, char** argv)
 
 		// Create geometry
 
-		Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 5.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 5.0f, 0.0f), 1.0f, gMaterial, gPhysics), woodTextureMaterial);
-		Geometry cube2 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 1.0f, 0.0f), 0.0f, gMaterial, gPhysics), tileTextureMaterial);
-		Geometry player = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 3.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f, glm::vec3(-1.5f, 3.0f, 0.0f), gMaterial, gPhysics), tileTextureMaterial);
+		Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 5.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 5.0f, 0.0f), 1.0f, phys.getMaterial(), phys.getPhysics()), woodTextureMaterial);
+		Geometry cube2 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 1.0f, 0.0f), 0.0f, phys.getMaterial(), phys.getPhysics()), tileTextureMaterial);
+		Geometry player = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 3.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f, glm::vec3(-1.5f, 3.0f, 0.0f), phys.getMaterial(), phys.getPhysics()), tileTextureMaterial);
 
 		gameObjects.push_back(&player);
 		gameObjects.push_back(&cube);
 		gameObjects.push_back(&cube2);
 
-		gScene->addActor(*cube.physObj);
-		gScene->addActor(*cube2.physObj);
-		gScene->addActor(*player.physObj);
+		phys.getScene()->addActor(*cube.physObj);
+		phys.getScene()->addActor(*cube2.physObj);
+		phys.getScene()->addActor(*player.physObj);
 		
 
 
@@ -206,8 +200,9 @@ int main(int argc, char** argv)
 			dt = t - dt;
 			t_sum += dt;
 			
-			gScene->simulate(dt); //elapsed time
-			gScene->fetchResults(true);
+			phys.getScene()->simulate(dt); //elapsed time
+			phys.getScene()->fetchResults(true);
+			//gScene->fetchCollision(true);
 
 
 
@@ -229,10 +224,6 @@ int main(int argc, char** argv)
 			gameObjects[1]->draw();
 			gameObjects[2]->draw();
 			
-			//physx::PxOverlapBuffer hit;
-			//physx::PxQueryFilterData fd;
-			//fd.flags |= physx::PxQueryFlag::eANY_HIT; 
-			//bool status = gScene->overlap(physx::PxSphereGeometry(1.0f),physx::PxTransform(gameObjects[0]->physObj->getGlobalPose().p), hit);
 			//std::cout << status << std::endl;
 
 
@@ -444,54 +435,54 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 }
 
 
-physx::PxDefaultAllocator		gAllocator;
-physx::PxDefaultErrorCallback	gErrorCallback;
+//physx::PxDefaultAllocator		gAllocator;
+//physx::PxDefaultErrorCallback	gErrorCallback;
 
-physx::PxFoundation* gFoundation = nullptr;
+//physx::PxFoundation* gFoundation = nullptr;
 
-physx::PxDefaultCpuDispatcher* gDispatcher = nullptr;
+//physx::PxDefaultCpuDispatcher* gDispatcher = nullptr;
 
-physx::PxPvd* gPvd = nullptr;
+//physx::PxPvd* gPvd = nullptr;
 
 
-void initPhysics()
-{
-	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
-	if (!gFoundation) throw ("failed to create PxCreateFoundation");
+//void initPhysics()
+//{
+//	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
+//if (!gFoundation) throw ("failed to create PxCreateFoundation");
 
 	// for visual debugger?
-	gPvd = PxCreatePvd(*gFoundation);
-	physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10); //what on earth...
-	gPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
+//	gPvd = PxCreatePvd(*gFoundation);
+//	physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10); //what on earth...
+//	gPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
 
 	//create physics
-	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(), true, gPvd);
-	if (!gPhysics) throw ("failed to create PxCreatePhysics");
+//	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(), true, gPvd);
+//	if (!gPhysics) throw ("failed to create PxCreatePhysics");
 
 	//setup scene
-	physx::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
+//	physx::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
 	//sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
-	sceneDesc.gravity = physx::PxVec3(0.0f, .0f, 0.0f);
-	gDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
-	sceneDesc.cpuDispatcher = gDispatcher;
-	sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
-	gScene = gPhysics->createScene(sceneDesc);
+//	sceneDesc.gravity = physx::PxVec3(0.0f, .0f, 0.0f);
+//	gDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
+//	sceneDesc.cpuDispatcher = gDispatcher;
+//	sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
+//	gScene = gPhysics->createScene(sceneDesc);
 
 
 	//scene client, aslo for debugger
-	physx::PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
-	if (pvdClient)
-	{
-		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
-		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
-		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
-	}
+//	physx::PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
+//	if (pvdClient)
+//	{
+//		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
+//		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
+//		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
+//	}
 
 	//create body 
-	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+//	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
 
-	physx::PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, physx::PxPlane(0, 1, 0, 0), *gMaterial);
-	gScene->addActor(*groundPlane);
+//	physx::PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, physx::PxPlane(0, 1, 0, 0), *gMaterial);
+//	gScene->addActor(*groundPlane);
 
 
 
@@ -500,10 +491,10 @@ void initPhysics()
 	///gScene->addActor(*aBoxActor);
 
 
-	std::cout << "doing physx" << std::endl;
+//	std::cout << "doing physx" << std::endl;
 	//run sim
 	
-}
+//}
 
 glm::vec3 updateMovement() {
 	glm::vec3 direction = glm::normalize(camera.getCameraFoward() + camera.getCameraRight());

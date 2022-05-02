@@ -13,7 +13,7 @@
 #include "Geometry.h"
 #include "Material.h"
 #include "Texture.h"
-#include "GamePhysx.cpp"
+#include "GamePhysx.h"
 //#include <filesystem>
 
 
@@ -204,6 +204,10 @@ int main(int argc, char** argv)
 			phys.getScene()->fetchResults(true);
 			//gScene->fetchCollision(true);
 
+			//phys.getScene()->collide(dt);
+			//phys.getScene()->fetchCollision(true);
+			//phys.getScene()->advance(); // Can this be skipped
+			//phys.getScene()->fetchResults(true);
 
 
 			// Clear backbuffer

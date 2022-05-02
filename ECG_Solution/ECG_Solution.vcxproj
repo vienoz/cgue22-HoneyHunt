@@ -9,6 +9,7 @@
     <ClCompile Include="src\ShaderNew.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\GamePhysx.h" />
     <ClInclude Include="src\Geometry.h" />
     <ClInclude Include="src\INIReader.h" />
     <ClCompile Include="src\Geometry.cpp" />

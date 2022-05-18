@@ -18,9 +18,9 @@ Material::~Material()
 {
 }
 
-ShaderNew* Material::getShader()
+std::shared_ptr<ShaderNew> Material::getShader()
 {
-	return _shader.get();
+	return _shader;
 }
 
 void Material::setUniforms()

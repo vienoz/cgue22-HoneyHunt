@@ -46,7 +46,7 @@ public:
 	/*!
 	 * @return The shader associated with this material
 	 */
-	ShaderNew* getShader();
+	std::shared_ptr<ShaderNew> getShader();
 
 	/*!
 	 * Sets this material's parameters as uniforms in the shader

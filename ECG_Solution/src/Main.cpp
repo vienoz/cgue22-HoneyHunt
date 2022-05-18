@@ -3,6 +3,7 @@
 * Institute of Computer Graphics and Algorithms.
 * This file is part of the ECG Lab Framework and must not be redistributed.
 */
+// Codename HoneyHero Polygonal Engine Copyright 2022 Julia Hofmann :)
 
 
 #include "Utils.h"
@@ -10,10 +11,11 @@
 #include "Light.h"
 #include "Camera.h"
 #include "ShaderNew.h"
-#include "Geometry.h"
 #include "Material.h"
 #include "Texture.h"
 #include "GamePhysx.h"
+#include "Model.h"
+#include "Entity.h"
 //#include <filesystem>
 
 
@@ -43,16 +45,38 @@ static float _zoom = 15.0f;
 bool keys[512];
 
 
-std::vector<Geometry*> gameObjects;
+//std::vector<Geometry*> gameObjects;
 
 
 /* --------------------------------------------- */
 // Main
 /* --------------------------------------------- */
 
+#if 0
+int protectedMain(int argc, char** argv);
+
 int main(int argc, char** argv)
 {
-	GamePhysx phys;
+	try
+	{
+		protectedMain(argc, argv);
+		return 0;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "Exception unhandled: " << e.what() << std::endl;
+		return 1;
+	}
+	catch (...)
+	{
+		std::cerr << "Exception of unknown type unhandled" << std::endl;
+		return 1;
+	}
+}
+#endif
+
+int main(int argc, char** argv)
+{
 	/* --------------------------------------------- */
 	// Load settings.ini
 	/* --------------------------------------------- */
@@ -143,6 +167,10 @@ int main(int argc, char** argv)
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
+	long int unsigned long ticks = 0;
+
+	GamePhysx phys;
+
 
 	/* --------------------------------------------- */
 	// Initialize scene and render loop
@@ -150,6 +178,7 @@ int main(int argc, char** argv)
 	{
 		// Load shader(s)
 		std::shared_ptr<ShaderNew> textureShader = std::make_shared<ShaderNew>("assets/texture_cel.vert.glsl", "assets/texture_cel.frag.glsl");
+		//std::shared_ptr<ShaderNew> textureShader = std::make_shared<ShaderNew>("assets/identity.vert.glsl", "assets/identity.frag.glsl");
 
 		// Create textures
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds");
@@ -161,19 +190,24 @@ int main(int argc, char** argv)
 
 		// Create geometry
 
-		Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 5.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 5.0f, 0.0f), 1.0f, phys.getMaterial(), phys.getPhysics()), woodTextureMaterial);
-		Geometry cube2 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 1.0f, 0.0f), 0.0f, phys.getMaterial(), phys.getPhysics()), tileTextureMaterial);
-		Geometry player = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 3.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f, glm::vec3(-1.5f, 3.0f, 0.0f), phys.getMaterial(), phys.getPhysics()), tileTextureMaterial);
+		//Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 5.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 5.0f, 0.0f), 1.0f, phys.getMaterial(), phys.getPhysics()), woodTextureMaterial);
+		//Geometry cube2 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 1.0f, 0.0f), 0.0f, phys.getMaterial(), phys.getPhysics()), tileTextureMaterial);
+		//Geometry player = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 3.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f, glm::vec3(-1.5f, 3.0f, 0.0f), phys.getMaterial(), phys.getPhysics()), tileTextureMaterial);
 
-		gameObjects.push_back(&player);
-		gameObjects.push_back(&cube);
-		gameObjects.push_back(&cube2);
+		//gameObjects.push_back(&player);
+		//gameObjects.push_back(&cube);
+		//gameObjects.push_back(&cube2);
 
-		phys.getScene()->addActor(*cube.physObj);
-		phys.getScene()->addActor(*cube2.physObj);
-		phys.getScene()->addActor(*player.physObj);
+		//phys.getScene()->addActor(*cube.physObj);
+		//phys.getScene()->addActor(*cube2.physObj);
+		//phys.getScene()->addActor(*player.physObj);
 		
+		std::shared_ptr<Model> tree = std::make_shared<Model>("assets/Lowpoly_tree_sample.obj", tileTextureMaterial);
+		std::shared_ptr<Entity> treeEntity = std::make_shared<Entity>(tree);
 
+		treeEntity->setPosition(glm::vec3(0, 0, 0));
+		treeEntity->setRotation(glm::vec3(0, 0, 0));
+		treeEntity->setScale(glm::vec3(1, 1, 1));
 
 		// Initialize camera
 		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
@@ -199,6 +233,7 @@ int main(int argc, char** argv)
 			t = float(glfwGetTime());
 			dt = t - dt;
 			t_sum += dt;
+			++ticks;
 			
 			phys.getScene()->simulate(dt); //elapsed time
 			phys.getScene()->fetchResults(true);
@@ -224,10 +259,12 @@ int main(int argc, char** argv)
 			setPerFrameUniforms(textureShader.get(), camera, dirL);
 
 			// Render
-			gameObjects[0]->draw();
-			gameObjects[1]->draw();
-			gameObjects[2]->draw();
+			//gameObjects[0]->draw();
+			//gameObjects[1]->draw();
+			//gameObjects[2]->draw();
 			
+			treeEntity->draw(camera);
+
 			//std::cout << status << std::endl;
 
 
@@ -298,7 +335,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 	if (action == GLFW_RELEASE && (key > 0 && key < 512)) {
 		keys[key] = false;
-		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(.0, .0, .0), true);
+		//gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(.0, .0, .0), true);
 	}
 
 	switch (action) {
@@ -501,7 +538,7 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 //}
 
 glm::vec3 updateMovement() {
-	glm::vec3 direction = glm::normalize(camera.getCameraFoward() + camera.getCameraRight());
+	/*glm::vec3 direction = glm::normalize(camera.getCameraFoward() + camera.getCameraRight());
 
 	if (keys[GLFW_KEY_W]) {
 		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(2*-camera.getCameraFoward().x, 2*-camera.getCameraFoward().y,2* -camera.getCameraFoward().z), true);
@@ -523,7 +560,9 @@ glm::vec3 updateMovement() {
 	}
 
 
-	physx::PxVec3 position = gameObjects[0]->physObj->getGlobalPose().p;
+	physx::PxVec3 position = gameObjects[0]->physObj->getGlobalPose().p;*/
 
-	return glm::vec3(position.x, position.y, position.z);
+	//return glm::vec3(position.x, position.y, position.z);
+
+	return glm::vec3(0, 0, 0);
 }

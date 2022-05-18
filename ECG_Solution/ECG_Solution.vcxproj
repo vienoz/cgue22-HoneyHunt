@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="src\Mesh.cpp" />
+    <ClCompile Include="src\Entity.cpp" />
+    <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\GamePhysx.cpp" />
     <ClCompile Include="src\GamePhysxCallback.cpp" />
@@ -8,11 +11,12 @@
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\ShaderNew.cpp" />
     <ClCompile Include="src\Texture.cpp" />
+    <ClInclude Include="src\Mesh.h" />
+    <ClInclude Include="src\Entity.h" />
+    <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\GamePhysx.h" />
-    <ClInclude Include="src\Geometry.h" />
     <ClInclude Include="src\INIReader.h" />
-    <ClCompile Include="src\Geometry.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClInclude Include="src\Light.h" />
     <ClInclude Include="src\Material.h" />

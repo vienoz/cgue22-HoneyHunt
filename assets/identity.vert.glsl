@@ -6,8 +6,8 @@
 */
 
 layout(location = 0) in vec3 position;
-layout(location = 1) in vec3 normal;
-layout(location = 2) in vec2 uv;
+layout(location = 1) in vec2 uv;
+layout(location = 2) in vec3 normal;
 
 out VertexData {
 	vec3 position_world;
@@ -18,7 +18,6 @@ out VertexData {
 layout(location = 0) uniform mat4 modelMatrix;
 layout(location = 1) uniform mat4 viewMatrix;
 layout(location = 2) uniform mat4 projMatrix;
-//uniform mat3 normalMatrix;
 
 void main() {
 	vert.normal_world = mat3(transpose(inverse(modelMatrix))) * normal;

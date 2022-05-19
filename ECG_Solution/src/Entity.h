@@ -2,58 +2,34 @@
 
 #include <glm/glm.hpp>
 
+#include "GamePhysx.h"
 #include "Model.h"
 #include "Camera.h"
-#include "GamePhysx.h"
 
-class Entity
+class PhysxEntity
 {
 protected:
     std::shared_ptr<Model> _model;
-
-    glm::vec3 _position;
-    glm::vec3 _rotation; // Euler Angles - Pan (x), Tilt (y), Roll (z)
-    glm::vec3 _scale;
-
-    glm::mat4 _modelMatrix;
-    bool _isModelMatrixDirty;
+    physx::PxRigidActor* _actor;
+    GamePhysx& _physx;
 
 public:
-    Entity(std::shared_ptr<Model> model)
-        : _model(model), _isModelMatrixDirty(true)
-    {}
+    PhysxEntity(GamePhysx& physx, std::shared_ptr<Model> model);
+    ~PhysxEntity();
 
-    virtual glm::vec3 getPosition();
-    virtual void setPosition(glm::vec3 value);
+    physx::PxRigidActor* getPhysxActor()
+    {
+        return _actor;
+    }
 
-    virtual glm::vec3 getRotation();
-    virtual void setRotation(glm::vec3 value);
-
-    virtual glm::vec3 getScale();
-    virtual void setScale(glm::vec3 value);
-
+    virtual void setGlobalPose(glm::mat4 transform);
     virtual void draw(Camera& camera);
 };
 
-// ==============================================
-
-class PhysxRigidEntity : public Entity
+class PhysxDynamicEntity : public PhysxEntity
 {
-protected:
-    physx::PxRigidBody* _pxObject;
-
 public:
-    PhysxRigidEntity(std::shared_ptr<Model> model, GamePhysx& physx, physx::PxShape* shape);
-    ~PhysxRigidEntity();
-
-    virtual glm::vec3 getPosition() override;
-    virtual void setPosition(glm::vec3 value) override;
-
-    virtual glm::vec3 getRotation() override;
-    virtual void setRotation(glm::vec3 value) override;
-
-    virtual glm::vec3 getScale() override;
-    virtual void setScale(glm::vec3 value) override;
-
-    virtual void draw(Camera& camera) override;
+    PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isDynamic);
 };
+
+// ==============================================;

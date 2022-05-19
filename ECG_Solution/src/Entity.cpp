@@ -1,78 +1,93 @@
 #include "Entity.h"
 
-glm::vec3 Entity::getPosition()
+static void physXMat4ToGlmMat4(const physx::PxMat44& mat4, glm::mat4& newMat)
 {
-    return _position;
+    newMat[0][0] = mat4[0][0];
+    newMat[0][1] = mat4[0][1];
+    newMat[0][2] = mat4[0][2];
+    newMat[0][3] = mat4[0][3];
+
+    newMat[1][0] = mat4[1][0];
+    newMat[1][1] = mat4[1][1];
+    newMat[1][2] = mat4[1][2];
+    newMat[1][3] = mat4[1][3];
+
+    newMat[2][0] = mat4[2][0];
+    newMat[2][1] = mat4[2][1];
+    newMat[2][2] = mat4[2][2];
+    newMat[2][3] = mat4[2][3];
+
+    newMat[3][0] = mat4[3][0];
+    newMat[3][1] = mat4[3][1];
+    newMat[3][2] = mat4[3][2];
+    newMat[3][3] = mat4[3][3];
 }
 
-void Entity::setPosition(glm::vec3 value)
+static void glmMat4ToPhysxMat4(const glm::mat4& mat4, physx::PxMat44& newMat)
 {
-    _position = value;
-    _isModelMatrixDirty = true;
+    newMat[0][0] = mat4[0][0];
+    newMat[0][1] = mat4[0][1];
+    newMat[0][2] = mat4[0][2];
+    newMat[0][3] = mat4[0][3];
+
+    newMat[1][0] = mat4[1][0];
+    newMat[1][1] = mat4[1][1];
+    newMat[1][2] = mat4[1][2];
+    newMat[1][3] = mat4[1][3];
+
+    newMat[2][0] = mat4[2][0];
+    newMat[2][1] = mat4[2][1];
+    newMat[2][2] = mat4[2][2];
+    newMat[2][3] = mat4[2][3];
+
+    newMat[3][0] = mat4[3][0];
+    newMat[3][1] = mat4[3][1];
+    newMat[3][2] = mat4[3][2];
+    newMat[3][3] = mat4[3][3];
 }
 
-glm::vec3 Entity::getRotation()
+PhysxEntity::PhysxEntity(GamePhysx& physx, std::shared_ptr<Model> model)
+    : _physx(physx), _model(model)
 {
-    return _rotation;
 }
 
-void Entity::setRotation(glm::vec3 value)
+PhysxEntity::~PhysxEntity()
 {
-    _rotation = value;
-    _isModelMatrixDirty = true;
-}
-
-glm::vec3 Entity::getScale()
-{
-    return _scale;
-}
-
-void Entity::setScale(glm::vec3 value)
-{
-    _scale = value;
-    _isModelMatrixDirty = true;
-}
-
-void Entity::draw(Camera& camera)
-{
-    if (_isModelMatrixDirty)
+    if (_actor != nullptr && _actor->isReleasable())
     {
-        _modelMatrix = glm::mat4();
-
-        _modelMatrix = glm::translate(_modelMatrix, _position);
-        _modelMatrix = glm::scale(_modelMatrix, _scale);
-
-        _modelMatrix = glm::rotate(_modelMatrix, _rotation.x, glm::vec3(0, 1, 0));
-        _modelMatrix = glm::rotate(_modelMatrix, _rotation.z, glm::vec3(1, 0, 0));
-        _modelMatrix = glm::rotate(_modelMatrix, _rotation.y, glm::vec3(0, 0, 1));
-
-        _isModelMatrixDirty = false;
+        _physx.getScene()->removeActor(*_actor);
+        _actor->release();
     }
-
-    _model->draw(_modelMatrix, camera);
 }
 
-// ==============================================
-
-PhysxRigidEntity::PhysxRigidEntity(std::shared_ptr<Model> model, GamePhysx& physx, physx::PxShape* shape)
-    : Entity(model)
+void PhysxEntity::setGlobalPose(glm::mat4 transform)
 {
-    _pxObject = physx.getPhysics()->createRigidDynamic(physx::PxTransform(physx::PxVec3(0, 0, 0)));
-    _pxObject->attachShape(*shape);
+    physx::PxMat44 mat;
+    glmMat4ToPhysxMat4(transform, mat);
+
+    _actor->setGlobalPose(physx::PxTransform(mat));
 }
 
-
-void PhysxRigidEntity::setPosition(glm::vec3 value)
+void PhysxEntity::draw(Camera& camera)
 {
-    Entity::setPosition(value);
+    glm::mat4 modelMatrix;
+    physXMat4ToGlmMat4(_actor->getGlobalPose(), modelMatrix);
+
+    _model->draw(modelMatrix, camera);
 }
 
-void PhysxRigidEntity::setRotation(glm::vec3 value)
+PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isKinematic)
+    : PhysxEntity(physx, model)
 {
-    Entity::setRotation(value);
-}
+    physx::PxRigidDynamic* me = physx.getPhysics()->createRigidDynamic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
 
-void PhysxRigidEntity::setScale(glm::vec3 value)
-{
-    Entity::setScale(value);
+    for (size_t i = 0; i < shapes.size(); ++i)
+        physx::PxRigidActorExt::createExclusiveShape(*me, shapes[i], *physx.getMaterial());
+
+    me->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
+    me->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, isKinematic);
+
+    _actor = me;
+
+    physx.getScene()->addActor(*_actor);
 }

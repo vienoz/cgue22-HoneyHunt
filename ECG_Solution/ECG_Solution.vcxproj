@@ -6,7 +6,6 @@
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\GamePhysx.cpp" />
-    <ClCompile Include="src\GamePhysxCallback.cpp" />
     <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\ShaderNew.cpp" />

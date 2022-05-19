@@ -16,6 +16,8 @@
 #include "GamePhysx.h"
 #include "Model.h"
 #include "Entity.h"
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
 //#include <filesystem>
 
 
@@ -169,7 +171,7 @@ int main(int argc, char** argv)
 
 	long int unsigned long ticks = 0;
 
-	GamePhysx phys;
+	GamePhysx physx;
 
 
 	/* --------------------------------------------- */
@@ -202,12 +204,15 @@ int main(int argc, char** argv)
 		//phys.getScene()->addActor(*cube2.physObj);
 		//phys.getScene()->addActor(*player.physObj);
 		
-		std::shared_ptr<Model> tree = std::make_shared<Model>("assets/Lowpoly_tree_sample.obj", tileTextureMaterial);
-		std::shared_ptr<Entity> treeEntity = std::make_shared<Entity>(tree);
+		std::vector<physx::PxGeometry> geoms;
+		//geoms.push_back(physx::PxBoxGeometry(4.f, 4.f, 4.f));
 
-		treeEntity->setPosition(glm::vec3(0, 0, 0));
-		treeEntity->setRotation(glm::vec3(0, 0, 0));
-		treeEntity->setScale(glm::vec3(1, 1, 1));
+		std::shared_ptr<Model> tree = std::make_shared<Model>("assets/Lowpoly_tree_sample.obj", tileTextureMaterial);
+		std::shared_ptr<PhysxDynamicEntity> treeEntity = std::make_shared<PhysxDynamicEntity>(physx, tree, geoms, false);
+
+		//treeEntity->setPosition(glm::vec3(0, 0, 0));
+		//treeEntity->setRotation(glm::vec3(0, 0, 0));
+		//treeEntity->setScale(glm::vec3(1, 1, 1));
 
 		// Initialize camera
 		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
@@ -224,7 +229,7 @@ int main(int argc, char** argv)
 
 		glm::mat4 modelMatrix4phys;
 
-
+		
 
 		while (!glfwWindowShouldClose(window)) {
 
@@ -235,14 +240,18 @@ int main(int argc, char** argv)
 			t_sum += dt;
 			++ticks;
 			
-			phys.getScene()->simulate(dt); //elapsed time
-			phys.getScene()->fetchResults(true);
+			physx.getScene()->simulate(dt); //elapsed time
+			physx.getScene()->fetchResults(true);
+			//physx.getScene()->collide(dt);
+			//physx.getScene()->fetchCollision(true);
+			//physx.getScene()->advance();
+			
 			//gScene->fetchCollision(true);
 
-			//phys.getScene()->collide(dt);
-			//phys.getScene()->fetchCollision(true);
-			//phys.getScene()->advance(); // Can this be skipped
-			//phys.getScene()->fetchResults(true);
+			//physx.getScene()->collide(dt);
+			//physx.getScene()->fetchCollision(true);
+			//physx.getScene()->advance(); // Can this be skipped
+			//physx.getScene()->fetchResults(true);
 
 
 			// Clear backbuffer
@@ -270,6 +279,8 @@ int main(int argc, char** argv)
 
 			// Swap buffers
 			glfwSwapBuffers(window);
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
 		}
 	}
 

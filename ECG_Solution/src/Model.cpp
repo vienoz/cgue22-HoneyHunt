@@ -34,6 +34,8 @@ void Model::loadModel(const std::string& path)
     // check for errors
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
         throw new std::exception(importer.GetErrorString());
+
+    importer.ApplyPostProcessing(aiProcess_GenNormals);
     
     // retrieve the directory path of the filepath
     _directory = path.substr(0, path.find_last_of('/'));

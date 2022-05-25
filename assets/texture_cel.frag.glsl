@@ -21,12 +21,13 @@ layout(location = 6) uniform vec3 materialCoefficients; // x = ambient, y = diff
 layout(location = 7) uniform float specularAlpha;
 
 const float levels = 5.0;
+const vec3 ambientLight = vec3(0.1);
 
 void main() {
     float lightBrightness = clamp(dot(-dirLDirection, vert.normalWorld), 0.0, 1.0);
     lightBrightness = floor(lightBrightness * levels) / levels;
 
-    float specularFactor = clamp(dot(unitToCameraVector, reflect(dirLDirection, vert.normalWorld)), 0.0, 1.0);
+    float specularFactor = clamp(dot(reflect(-dirLDirection, vert.normalWorld), unitToCameraVector), 0.0, 1.0);
     specularFactor = floor(specularFactor * levels) / levels;
 
     vec4 textureColor = texture2D(diffuseTexture, vert.uv);
@@ -34,5 +35,5 @@ void main() {
     vec3 finalDiffuse = dirLColor * lightBrightness;
     vec3 finalSpecular = dirLColor * specularFactor;
 
-    color = vec4(textureColor.rgb * finalDiffuse + finalSpecular, textureColor.a);
+    color = vec4(textureColor.rgb * finalDiffuse + finalSpecular + ambientLight, textureColor.a);
 }

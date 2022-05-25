@@ -208,7 +208,13 @@ int main(int argc, char** argv)
 		//geoms.push_back(physx::PxBoxGeometry(4.f, 4.f, 4.f));
 
 		std::shared_ptr<Model> tree = std::make_shared<Model>("assets/Lowpoly_tree_sample.obj", tileTextureMaterial);
+		std::shared_ptr<Model> teapot = std::make_shared<Model>("assets/dragön.fbx", tileTextureMaterial);
+
 		std::shared_ptr<PhysxDynamicEntity> treeEntity = std::make_shared<PhysxDynamicEntity>(physx, tree, geoms, false);
+		std::shared_ptr<PhysxDynamicEntity> teapotEntity = std::make_shared<PhysxDynamicEntity>(physx, teapot, geoms, false);
+
+		treeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(-5, 0, 0)));
+		teapotEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(5, 0, 0)));
 
 		//treeEntity->setPosition(glm::vec3(0, 0, 0));
 		//treeEntity->setRotation(glm::vec3(0, 0, 0));
@@ -272,6 +278,7 @@ int main(int argc, char** argv)
 			//gameObjects[1]->draw();
 			//gameObjects[2]->draw();
 			
+			teapotEntity->draw(camera);
 			treeEntity->draw(camera);
 
 			//std::cout << status << std::endl;

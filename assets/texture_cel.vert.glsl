@@ -23,7 +23,10 @@ void main() {
 	vec4 globalPosition = modelMatrix * vec4(position, 1);
 
 	vert.positionWorld = globalPosition.xyz;
-	vert.normalWorld = normalize(modelMatrix * vec4(normal, 1)).xyz;
+	//vert.normalWorld = normalize(modelMatrix * vec4(normal, 1)).xyz;
+	
+	vert.normalWorld = normalize(transpose(inverse(mat3(modelMatrix))) * normal);
+	//vert.normalWorld = normal;
 	vert.uv = uv;
 
 	unitToCameraVector = normalize(vert.positionWorld - cameraWorld);

@@ -16,6 +16,7 @@
 #include "GamePhysx.h"
 #include "Model.h"
 #include "Entity.h"
+#include "Asset.h"
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
 //#include <filesystem>
@@ -45,7 +46,6 @@ static bool _dragging = false;
 static bool _strafing = false;
 static float _zoom = 15.0f;
 bool keys[512];
-
 
 //std::vector<Geometry*> gameObjects;
 
@@ -99,6 +99,8 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Create context
 	/* --------------------------------------------- */
+
+	AssetManager::init();
 
 	glfwSetErrorCallback([](int error, const char* description) { std::cout << "GLFW error " << error << ": " << description << std::endl; });
 
@@ -183,12 +185,16 @@ int main(int argc, char** argv)
 		//std::shared_ptr<ShaderNew> textureShader = std::make_shared<ShaderNew>("assets/identity.vert.glsl", "assets/identity.frag.glsl");
 
 		// Create textures
-		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds");
-		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/bee.dds");
+		//std::shared_ptr<Texture> woodTexture = AssetManager::getInstance()->getTexture("assets/textures/wood_texture.dds");
+		//std::shared_ptr<Texture> tileTexture = AssetManager::getInstance()->getTexture("assets/textures/bee.dds");
 
 		// Create materials
-		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture);
-		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, tileTexture);
+		//std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture);
+		//std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, tileTexture);
+
+		AssetManager::getInstance()->defaultMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"));
+
+
 
 		// Create geometry
 
@@ -201,20 +207,23 @@ int main(int argc, char** argv)
 		//gameObjects.push_back(&cube2);
 
 		//phys.getScene()->addActor(*cube.physObj);
-		//phys.getScene()->addActor(*cube2.physObj);
+		//phys.getScene()->addActor(*cube2.physObj);s
 		//phys.getScene()->addActor(*player.physObj);
 		
 		std::vector<physx::PxGeometry> geoms;
 		//geoms.push_back(physx::PxBoxGeometry(4.f, 4.f, 4.f));
 
-		std::shared_ptr<Model> tree = std::make_shared<Model>("assets/Lowpoly_tree_sample.obj", tileTextureMaterial);
-		std::shared_ptr<Model> teapot = std::make_shared<Model>("assets/dragön.fbx", tileTextureMaterial);
+		std::shared_ptr<Model> tree = std::make_shared<Model>("assets/Lowpoly_tree_sample.obj", textureShader);
+		//std::shared_ptr<Model> teapot = std::make_shared<Model>("assets/dragön.fbx", textureShader);
+		std::shared_ptr<Model> butterfliege = std::make_shared<Model>("assets/potted_plant_obj.obj", textureShader);
 
 		std::shared_ptr<PhysxDynamicEntity> treeEntity = std::make_shared<PhysxDynamicEntity>(physx, tree, geoms, false);
-		std::shared_ptr<PhysxDynamicEntity> teapotEntity = std::make_shared<PhysxDynamicEntity>(physx, teapot, geoms, false);
+		//std::shared_ptr<PhysxDynamicEntity> teapotEntity = std::make_shared<PhysxDynamicEntity>(physx, teapot, geoms, false);
+		std::shared_ptr<PhysxDynamicEntity> butterfliegeEntity = std::make_shared<PhysxDynamicEntity>(physx, butterfliege, geoms, false);
 
 		treeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(-5, 0, 0)));
-		teapotEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(5, 0, 0)));
+		//teapotEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(5, 0, 0)));
+		butterfliegeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)));
 
 		//treeEntity->setPosition(glm::vec3(0, 0, 0));
 		//treeEntity->setRotation(glm::vec3(0, 0, 0));
@@ -278,8 +287,9 @@ int main(int argc, char** argv)
 			//gameObjects[1]->draw();
 			//gameObjects[2]->draw();
 			
-			teapotEntity->draw(camera);
+			//teapotEntity->draw(camera);
 			treeEntity->draw(camera);
+			butterfliegeEntity->draw(camera);
 
 			//std::cout << status << std::endl;
 
@@ -304,6 +314,8 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 
 	glfwTerminate();
+
+	AssetManager::destroy();
 
 	return EXIT_SUCCESS;
 }

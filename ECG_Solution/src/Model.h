@@ -8,6 +8,7 @@
 
 #include "Mesh.h"
 #include "ShaderNew.h"
+#include "Asset.h"
 
 #include <string>
 #include <fstream>
@@ -21,23 +22,20 @@ class Model
 protected:
     std::vector<Mesh*> _meshes;
     std::string _directory;
-    std::shared_ptr<Material> _material;
 
     // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
-    void loadModel(const std::string& path);
+    void loadModel(const std::string& path, std::shared_ptr<ShaderNew> shader);
 
     // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
-    void processNode(aiNode* node, const aiScene* scene);
+    void processNode(aiNode* node, const aiScene* scene, std::shared_ptr<ShaderNew> shader);
 
-    Mesh* processMesh(aiMesh* mesh, const aiScene* scene);
+    Mesh* processMesh(aiMesh* mesh, const aiScene* scene, std::shared_ptr<ShaderNew> shader);
 
-    // checks all material textures of a given type and loads the textures if they're not loaded yet.
-    // the required info is returned as a Texture struct.
-    std::vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type);
+    std::vector<std::shared_ptr<Texture> > loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 
 public:
     // constructor, expects a filepath to a 3D model.
-    Model(const std::string& path, std::shared_ptr<Material> material);
+    Model(const std::string& path, std::shared_ptr<ShaderNew> shader);
     ~Model();
 
     void draw(glm::mat4 modelMatrix, Camera& camera);

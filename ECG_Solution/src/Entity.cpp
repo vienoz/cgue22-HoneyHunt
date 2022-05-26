@@ -55,6 +55,7 @@ PhysxEntity::~PhysxEntity()
 {
     if (_actor != nullptr && _actor->isReleasable())
     {
+        // TODO check if stupid
         _physx.getScene()->removeActor(*_actor);
         _actor->release();
     }

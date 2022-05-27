@@ -1,10 +1,17 @@
 #pragma once
-#include <PxPhysicsAPI.h>
+
 #include <istream>
 #include <memory>
+#include <iostream>
+#include <PxPhysicsAPI.h>
+
+
+
 
 class GamePhysxCallback : public physx::PxSimulationEventCallback {
 
+	
+	 
 	void onConstraintBreak(physx::PxConstraintInfo* /*constraints*/, physx::PxU32 /*count*/) override { std::printf("onConstraintBreak\n"); }
 	void onWake(physx::PxActor** /*actors*/, physx::PxU32 /*count*/) override { std::printf("onWake\n"); }
 	void onSleep(physx::PxActor** /*actors*/, physx::PxU32 /*count*/) override { std::printf("onSleep\n"); }
@@ -13,8 +20,14 @@ class GamePhysxCallback : public physx::PxSimulationEventCallback {
 
 	void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs) {
 		(void)(pairHeader);
-		std::printf("Colission detected\n");
+		physx::PxVec3 a = pairHeader.actors[1]->getGlobalPose().p;
+		//std::cout << a.x <<" "<< a.y << " " << a.z << std::endl;
+		collisionObj = pairHeader.actors[1];
+	
 	}
+
+public:
+	physx::PxRigidActor* collisionObj;
 
 };
 

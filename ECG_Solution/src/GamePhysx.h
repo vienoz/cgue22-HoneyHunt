@@ -2,6 +2,7 @@
 
 #include "GamePhysxCallback.cpp";
 
+
 class GamePhysx {
 public:
 	GamePhysx();
@@ -11,6 +12,7 @@ public:
 	physx::PxPhysics* getPhysics() const;
 	physx::PxScene* getScene() const;
 	physx::PxMaterial* getMaterial() const;
+	GamePhysxCallback callback;
 
 private:
 	physx::PxDefaultAllocator		gAllocator;
@@ -22,8 +24,6 @@ private:
 	physx::PxScene* gScene = nullptr;
 	physx::PxPhysics* gPhysics = nullptr;
 	physx::PxMaterial* gMaterial = nullptr;
-
-	GamePhysxCallback callback;
 
 	void init();
 };

@@ -16,7 +16,6 @@
 #include "GamePhysx.h"
 //#include <filesystem>
 
-
 /* --------------------------------------------- */
 // Prototypes
 /* --------------------------------------------- */
@@ -165,9 +164,13 @@ int main(int argc, char** argv)
 		Geometry cube2 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 1.0f, 0.0f), 0.0f, phys.getMaterial(), phys.getPhysics()), tileTextureMaterial);
 		Geometry player = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 3.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f, glm::vec3(-1.5f, 3.0f, 0.0f), phys.getMaterial(), phys.getPhysics()), tileTextureMaterial);
 
-		gameObjects.push_back(&player);
-		gameObjects.push_back(&cube);
-		gameObjects.push_back(&cube2);
+		cube.physObj->setName("wooden cube");
+		cube2.physObj->setName("bee cube");
+		player.physObj->setName("player");
+		
+	 	gameObjects.push_back(&player);
+		gameObjects.push_back(&cube);  //index 1
+		gameObjects.push_back(&cube2); //index 2
 
 		phys.getScene()->addActor(*cube.physObj);
 		phys.getScene()->addActor(*cube2.physObj);
@@ -228,6 +231,20 @@ int main(int argc, char** argv)
 			gameObjects[1]->draw();
 			gameObjects[2]->draw();
 			
+			if (phys.callback.collisionObj != NULL) {
+				int n = 0;
+				for (auto const& value : gameObjects) {
+					if (value->physObj == phys.callback.collisionObj) {
+						//std::cout << "collision with obj: " << n << "\n";
+						std::cout<<gameObjects[n]->physObj->getName() << "\n";
+						phys.callback.collisionObj = NULL;
+					}
+					n++;
+				}
+			}
+
+
+
 			//std::cout << status << std::endl;
 
 

@@ -82,8 +82,11 @@ PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> 
 {
     physx::PxRigidDynamic* me = physx.getPhysics()->createRigidDynamic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
 
-    for (size_t i = 0; i < shapes.size(); ++i)
-        physx::PxRigidActorExt::createExclusiveShape(*me, shapes[i], *physx.getMaterial());
+  //  for (size_t i = 0; i < shapes.size(); ++i)
+  //      physx::PxRigidActorExt::createExclusiveShape(*me, shapes[i], *physx.getMaterial());
+    physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(1, 1, 1), *physx.getMaterial());
+
+
 
     me->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
     me->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, isKinematic);

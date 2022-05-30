@@ -48,6 +48,7 @@ static float _zoom = 15.0f;
 bool keys[512];
 
 //std::vector<Geometry*> gameObjects;
+std::shared_ptr<PhysxDynamicEntity> playerEntity;
 
 
 /* --------------------------------------------- */
@@ -216,12 +217,15 @@ int main(int argc, char** argv)
 		std::shared_ptr<Model> tree = std::make_shared<Model>("assets/Lowpoly_tree_sample.obj", textureShader);
 		//std::shared_ptr<Model> teapot = std::make_shared<Model>("assets/dragön.fbx", textureShader);
 		std::shared_ptr<Model> butterfliege = std::make_shared<Model>("assets/potted_plant_obj.obj", textureShader);
+		std::shared_ptr<Model> player = std::make_shared<Model>("assets/biene.obj", textureShader);
 
 		std::shared_ptr<PhysxDynamicEntity> treeEntity = std::make_shared<PhysxDynamicEntity>(physx, tree, geoms, false);
 		//std::shared_ptr<PhysxDynamicEntity> teapotEntity = std::make_shared<PhysxDynamicEntity>(physx, teapot, geoms, false);
 		std::shared_ptr<PhysxDynamicEntity> butterfliegeEntity = std::make_shared<PhysxDynamicEntity>(physx, butterfliege, geoms, false);
+		playerEntity = std::make_shared<PhysxDynamicEntity>(physx, player, geoms, false);
 
 		treeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(-5, 0, 0)));
+		playerEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(15, 10, 0)));
 		//teapotEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(5, 0, 0)));
 		butterfliegeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)));
 
@@ -288,6 +292,7 @@ int main(int argc, char** argv)
 			//gameObjects[2]->draw();
 			
 			//teapotEntity->draw(camera);
+			playerEntity->draw(camera);
 			treeEntity->draw(camera);
 			butterfliegeEntity->draw(camera);
 
@@ -568,31 +573,34 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 //}
 
 glm::vec3 updateMovement() {
-	/*glm::vec3 direction = glm::normalize(camera.getCameraFoward() + camera.getCameraRight());
+	glm::vec3 direction = glm::normalize(camera.getCameraFoward() + camera.getCameraRight());
+
+	//playerEntity->getPhysxActor()->setLinearVelocity
 
 	if (keys[GLFW_KEY_W]) {
-		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(2*-camera.getCameraFoward().x, 2*-camera.getCameraFoward().y,2* -camera.getCameraFoward().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(2*-camera.getCameraFoward().x, 2*-camera.getCameraFoward().y,2* -camera.getCameraFoward().z), true);
 	}
 	if (keys[GLFW_KEY_A]) {
-		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(-camera.getCameraRight().x, -camera.getCameraRight().y, -camera.getCameraRight().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(-camera.getCameraRight().x, -camera.getCameraRight().y, -camera.getCameraRight().z), true);
 	}
 	if (keys[GLFW_KEY_S]) {
-		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(camera.getCameraFoward().x, camera.getCameraFoward().y, camera.getCameraFoward().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(camera.getCameraFoward().x, camera.getCameraFoward().y, camera.getCameraFoward().z), true);
 	}
 	if (keys[GLFW_KEY_D]) {
-		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(camera.getCameraRight().x, camera.getCameraRight().y, camera.getCameraRight().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(camera.getCameraRight().x, camera.getCameraRight().y, camera.getCameraRight().z), true);
 	}
 	if (keys[GLFW_KEY_SPACE]) {
-		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(.0, 1.0, .0), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(.0, 1.0, .0), true);
 	}
 	if (keys[GLFW_KEY_LEFT_SHIFT]) {
-		gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(.0, -1.0, .0), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(.0, -1.0, .0), true);
 	}
 
 
-	physx::PxVec3 position = gameObjects[0]->physObj->getGlobalPose().p;*/
+	physx::PxVec3 position = playerEntity->getPhysxActor()->getGlobalPose().p;
 
-	//return glm::vec3(position.x, position.y, position.z);
+	return glm::vec3(position.x, position.y, position.z);
+	
 
-	return glm::vec3(0, 0, 0);
+	//return glm::vec3(15, 10, 0);
 }

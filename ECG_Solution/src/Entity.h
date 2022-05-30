@@ -10,14 +10,14 @@ class PhysxEntity
 {
 protected:
     std::shared_ptr<Model> _model;
-    physx::PxRigidActor* _actor;
+    physx::PxRigidDynamic* _actor;
     GamePhysx& _physx;
 
 public:
     PhysxEntity(GamePhysx& physx, std::shared_ptr<Model> model);
     ~PhysxEntity();
 
-    physx::PxRigidActor* getPhysxActor()
+    physx::PxRigidDynamic* getPhysxActor()
     {
         return _actor;
     }
@@ -25,7 +25,7 @@ public:
     virtual void setGlobalPose(glm::mat4 transform);
     virtual void draw(Camera& camera);
 };
-
+  
 class PhysxDynamicEntity : public PhysxEntity
 {
 public:

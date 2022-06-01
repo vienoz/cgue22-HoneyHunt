@@ -583,42 +583,16 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 	//physx::PxRigidDynamic* aBoxActor = gPhysics->createRigidDynamic(physx::PxTransform(physx::PxVec3(5.0, 15.0, 5.0)));
 	//physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*aBoxActor,physx::PxBoxGeometry(2 / 2, 2 / 2, 2 / 2), *gMaterial);
 	///gScene->addActor(*aBoxActor);
-
-
 //	std::cout << "doing physx" << std::endl;
 	//run sim
-	
 //}
-//glm::vec3 oldDirection = glm::normalize(glm::vec3(0.0, 0.0, 1.0));
+
+
+//TODO: add slight pitch when moving forward, by adding quaternions?
 glm::vec3 updateMovement() {
-	//glm::vec3 newDirection = glm::normalize(camera.getCameraFoward() + camera.getCameraRight());
 	glm::vec3 newDirection = glm::normalize(camera.getCameraFoward());
 	
-	//glm::vec3 faceDir = newDirection - oldDirection;
-
-	//double yaw = std::atan2(faceDir.x, faceDir.z);
-	//double pitch = std::atan2(std::sqrt(stuff.z * stuff.z + stuff.x * stuff.x), stuff.y) + glm::pi<float>();
-	/*physx::PxTransform a = playerEntity->getPhysxActor()->getGlobalPose();
-	playerEntity->getPhysxActor()->*/
-	//glm::vec3 rotationAxis = glm::normalize(glm::cross(oldDirection, newDirection));
-
-	//float rotationOnY = (glm::dot(glm::vec2(oldDirection.x, oldDirection.z), glm::vec2(newDirection.x, newDirection.z)));
-	
-	//rotationOnY = atan2(newDirection.y, newDirection.x) - atan2(oldDirection.y, oldDirection.x);
-	
-	//std::cout << newDirection.x <<" " << newDirection.z << "\n";
-
-
-	//rotationOnY = acos(rotationOnY);
-
-
-
-	//float fml = glm::cross(glm::vec2(oldDirection.x, oldDirection.z), glm::vec2(newDirection.x, newDirection.z)));
 	float playerDirection = atan2(newDirection.x , newDirection.z);
-	
-
-	//oida = glm::radians((oida));
-
 
 	if (keys[GLFW_KEY_W]) {
 		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(8*-camera.getCameraFoward().x, 8*-camera.getCameraFoward().y,8* -camera.getCameraFoward().z), true);
@@ -639,27 +613,13 @@ glm::vec3 updateMovement() {
 		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(.0, -4.0, .0), true);
 	}
 
-
-
 	physx::PxVec3 position = playerEntity->getPhysxActor()->getGlobalPose().p;
 
 	physx::PxTransform a;
 	a.p = position;
-	//winkel:lookat
-	//a.q= physx::PxQuat(cos(glm::radians(90.0f / 2)), 0, sin(glm::radians(90.0f / 2)) * 1, 0);   bullshit
-	//a.q = physx::PxQuat(0.5, physx::PxVec3(camera.getCameraFoward().x, camera.getCameraFoward().y, camera.getCameraFoward().z));
 	a.q = physx::PxQuat(playerDirection, physx::PxVec3(0.0, 1.0, 0.0));
 	playerEntity->getPhysxActor()->setGlobalPose(a);
 
-	glm::rotate(glm::mat4(1.0), 90.0f, glm::vec3(0.0, 1.0, 0.0));
-
-
-	//glm::quat rot = glm::angleAxis(glm::radians(12.5), glm::vec3(.01, 1.0,0.0));
-
-	//newDirection = oldDirection;
-
 	return glm::vec3(position.x, position.y, position.z);
 	
-
-	//return glm::vec3(15, 10, 0);
 }

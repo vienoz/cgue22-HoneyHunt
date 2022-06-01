@@ -16,6 +16,7 @@
 #include "GamePhysx.h"
 #include "Model.h"
 #include "Entity.h"
+#include <math.h> 
 #include "Asset.h"
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
@@ -49,6 +50,7 @@ bool keys[512];
 
 //std::vector<Geometry*> gameObjects;
 std::shared_ptr<PhysxDynamicEntity> playerEntity;
+std::vector<std::shared_ptr<PhysxDynamicEntity>> gameObjects;
 
 
 /* --------------------------------------------- */
@@ -229,6 +231,10 @@ int main(int argc, char** argv)
 		//teapotEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(5, 0, 0)));
 		butterfliegeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)));
 
+		gameObjects.push_back(playerEntity);
+		gameObjects.push_back(treeEntity);
+		gameObjects.push_back(butterfliegeEntity);
+
 		//treeEntity->setPosition(glm::vec3(0, 0, 0));
 		//treeEntity->setRotation(glm::vec3(0, 0, 0));
 		//treeEntity->setScale(glm::vec3(1, 1, 1));
@@ -296,13 +302,25 @@ int main(int argc, char** argv)
 			treeEntity->draw(camera);
 			butterfliegeEntity->draw(camera);
 
+			if (physx.callback.collisionObj != NULL) {
+				int n = 0;
+				for (auto const& value : gameObjects) {
+					if (value->getPhysxActor() == physx.callback.collisionObj) {
+						std::cout << "collision with obj: " << n << "\n";
+						//std::cout << gameObjects[n]->physObj->getName() << "\n";
+						physx.callback.collisionObj = NULL;
+					}
+					n++;
+				}
+			}
+
 			//std::cout << status << std::endl;
 
 
 			// Swap buffers
-			glfwSwapBuffers(window);
+ 			glfwSwapBuffers(window);
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
+			//std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
 		}
 	}
 
@@ -370,7 +388,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 	if (action == GLFW_RELEASE && (key > 0 && key < 512)) {
 		keys[key] = false;
-		//gameObjects[0]->physObj->setLinearVelocity(physx::PxVec3(.0, .0, .0), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(.0, .0, .0), true);
 	}
 
 	switch (action) {
@@ -571,11 +589,36 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 	//run sim
 	
 //}
-
+//glm::vec3 oldDirection = glm::normalize(glm::vec3(0.0, 0.0, 1.0));
 glm::vec3 updateMovement() {
-	glm::vec3 direction = glm::normalize(camera.getCameraFoward() + camera.getCameraRight());
+	//glm::vec3 newDirection = glm::normalize(camera.getCameraFoward() + camera.getCameraRight());
+	glm::vec3 newDirection = glm::normalize(camera.getCameraFoward());
+	
+	//glm::vec3 faceDir = newDirection - oldDirection;
 
-	//playerEntity->getPhysxActor()->setLinearVelocity
+	//double yaw = std::atan2(faceDir.x, faceDir.z);
+	//double pitch = std::atan2(std::sqrt(stuff.z * stuff.z + stuff.x * stuff.x), stuff.y) + glm::pi<float>();
+	/*physx::PxTransform a = playerEntity->getPhysxActor()->getGlobalPose();
+	playerEntity->getPhysxActor()->*/
+	//glm::vec3 rotationAxis = glm::normalize(glm::cross(oldDirection, newDirection));
+
+	//float rotationOnY = (glm::dot(glm::vec2(oldDirection.x, oldDirection.z), glm::vec2(newDirection.x, newDirection.z)));
+	
+	//rotationOnY = atan2(newDirection.y, newDirection.x) - atan2(oldDirection.y, oldDirection.x);
+	
+	//std::cout << newDirection.x <<" " << newDirection.z << "\n";
+
+
+	//rotationOnY = acos(rotationOnY);
+
+
+
+	//float fml = glm::cross(glm::vec2(oldDirection.x, oldDirection.z), glm::vec2(newDirection.x, newDirection.z)));
+
+	float oida = atan(newDirection.x / newDirection.z);
+
+	//oida = glm::radians((oida));
+	std::cout << oida << "\n";
 
 	if (keys[GLFW_KEY_W]) {
 		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(2*-camera.getCameraFoward().x, 2*-camera.getCameraFoward().y,2* -camera.getCameraFoward().z), true);
@@ -597,7 +640,23 @@ glm::vec3 updateMovement() {
 	}
 
 
+
 	physx::PxVec3 position = playerEntity->getPhysxActor()->getGlobalPose().p;
+
+	physx::PxTransform a;
+	a.p = position;
+	//winkel:lookat
+	//a.q= physx::PxQuat(cos(glm::radians(90.0f / 2)), 0, sin(glm::radians(90.0f / 2)) * 1, 0);   bullshit
+	//a.q = physx::PxQuat(0.5, physx::PxVec3(camera.getCameraFoward().x, camera.getCameraFoward().y, camera.getCameraFoward().z));
+	a.q = physx::PxQuat(oida, physx::PxVec3(0.0, 1.0, 0.0));
+	playerEntity->getPhysxActor()->setGlobalPose(a);
+
+	glm::rotate(glm::mat4(1.0), 90.0f, glm::vec3(0.0, 1.0, 0.0));
+
+
+	//glm::quat rot = glm::angleAxis(glm::radians(12.5), glm::vec3(.01, 1.0,0.0));
+
+	//newDirection = oldDirection;
 
 	return glm::vec3(position.x, position.y, position.z);
 	

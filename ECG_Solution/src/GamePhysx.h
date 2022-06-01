@@ -22,8 +22,12 @@ class GamePhysxCallback : public physx::PxSimulationEventCallback {
 
 	void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs) {
 		(void)(pairHeader);
-		std::printf("Colission detected\n");
+		physx::PxVec3 a = pairHeader.actors[1]->getGlobalPose().p;
+		collisionObj = pairHeader.actors[1];
+		//std::printf("Colission detected\n");
 	}
+public:
+	physx::PxRigidActor* collisionObj;
 
 };
 
@@ -37,6 +41,7 @@ public:
 	physx::PxPhysics* getPhysics() const;
 	physx::PxScene* getScene() const;
 	physx::PxMaterial* getMaterial() const;
+	GamePhysxCallback callback;
 
 private:
 	physx::PxDefaultAllocator		gAllocator;
@@ -49,7 +54,7 @@ private:
 	physx::PxPhysics* gPhysics = nullptr;
 	physx::PxMaterial* gMaterial = nullptr;
 
-	GamePhysxCallback callback;
+
 
 	void init();
 };

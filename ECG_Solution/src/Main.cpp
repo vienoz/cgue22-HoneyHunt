@@ -614,29 +614,29 @@ glm::vec3 updateMovement() {
 
 
 	//float fml = glm::cross(glm::vec2(oldDirection.x, oldDirection.z), glm::vec2(newDirection.x, newDirection.z)));
-
-	float oida = atan(newDirection.x / newDirection.z);
+	float playerDirection = atan2(newDirection.x , newDirection.z);
+	
 
 	//oida = glm::radians((oida));
-	std::cout << oida << "\n";
+
 
 	if (keys[GLFW_KEY_W]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(2*-camera.getCameraFoward().x, 2*-camera.getCameraFoward().y,2* -camera.getCameraFoward().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(8*-camera.getCameraFoward().x, 8*-camera.getCameraFoward().y,8* -camera.getCameraFoward().z), true);
 	}
 	if (keys[GLFW_KEY_A]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(-camera.getCameraRight().x, -camera.getCameraRight().y, -camera.getCameraRight().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * -camera.getCameraRight().x, 6 * -camera.getCameraRight().y, 6 * -camera.getCameraRight().z), true);
 	}
 	if (keys[GLFW_KEY_S]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(camera.getCameraFoward().x, camera.getCameraFoward().y, camera.getCameraFoward().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * camera.getCameraFoward().x, 6 * camera.getCameraFoward().y, 6 * camera.getCameraFoward().z), true);
 	}
 	if (keys[GLFW_KEY_D]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(camera.getCameraRight().x, camera.getCameraRight().y, camera.getCameraRight().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * camera.getCameraRight().x, 6 * camera.getCameraRight().y, 6 * camera.getCameraRight().z), true);
 	}
 	if (keys[GLFW_KEY_SPACE]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(.0, 1.0, .0), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(.0, 4.0, .0), true);
 	}
 	if (keys[GLFW_KEY_LEFT_SHIFT]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(.0, -1.0, .0), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(.0, -4.0, .0), true);
 	}
 
 
@@ -648,7 +648,7 @@ glm::vec3 updateMovement() {
 	//winkel:lookat
 	//a.q= physx::PxQuat(cos(glm::radians(90.0f / 2)), 0, sin(glm::radians(90.0f / 2)) * 1, 0);   bullshit
 	//a.q = physx::PxQuat(0.5, physx::PxVec3(camera.getCameraFoward().x, camera.getCameraFoward().y, camera.getCameraFoward().z));
-	a.q = physx::PxQuat(oida, physx::PxVec3(0.0, 1.0, 0.0));
+	a.q = physx::PxQuat(playerDirection, physx::PxVec3(0.0, 1.0, 0.0));
 	playerEntity->getPhysxActor()->setGlobalPose(a);
 
 	glm::rotate(glm::mat4(1.0), 90.0f, glm::vec3(0.0, 1.0, 0.0));

@@ -9,27 +9,43 @@
 class PhysxEntity
 {
 protected:
+  
     std::shared_ptr<Model> _model;
-    physx::PxRigidDynamic* _actor;
     GamePhysx& _physx;
 
 public:
     PhysxEntity(GamePhysx& physx, std::shared_ptr<Model> model);
-    ~PhysxEntity();
+    //~PhysxEntity();
+
+};
+  
+class PhysxDynamicEntity : public PhysxEntity
+{
+public:
+    physx::PxRigidDynamic* _actor;
+    virtual void draw(Camera& camera);
+    virtual void setGlobalPose(glm::mat4 transform);
 
     physx::PxRigidDynamic* getPhysxActor()
     {
         return _actor;
     }
 
-    virtual void setGlobalPose(glm::mat4 transform);
-    virtual void draw(Camera& camera);
-};
-  
-class PhysxDynamicEntity : public PhysxEntity
-{
-public:
     PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isDynamic);
+};
+
+class PhysxStaticEntity : public PhysxEntity {
+public: 
+    physx::PxRigidStatic* _actor;
+    virtual void draw(Camera& camera);
+    virtual void setGlobalPose(glm::mat4 transform);
+
+    physx::PxRigidStatic* getPhysxActor()
+    {
+        return _actor;
+    }
+
+    PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isDynamic);
 };
 
 // ==============================================;

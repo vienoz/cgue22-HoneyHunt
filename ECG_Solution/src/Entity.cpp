@@ -51,7 +51,7 @@ PhysxEntity::PhysxEntity(GamePhysx& physx, std::shared_ptr<Model> model)
 {
 }
 
-PhysxEntity::~PhysxEntity()
+/*PhysxEntity::~PhysxEntity()
 {
     if (_actor != nullptr && _actor->isReleasable())
     {
@@ -59,9 +59,9 @@ PhysxEntity::~PhysxEntity()
         _physx.getScene()->removeActor(*_actor);
         _actor->release();
     }
-}
+}*/
 
-void PhysxEntity::setGlobalPose(glm::mat4 transform)
+void PhysxDynamicEntity::setGlobalPose(glm::mat4 transform)
 {
     physx::PxMat44 mat;
     glmMat4ToPhysxMat4(transform, mat);
@@ -69,7 +69,7 @@ void PhysxEntity::setGlobalPose(glm::mat4 transform)
     _actor->setGlobalPose(physx::PxTransform(mat));
 }
 
-void PhysxEntity::draw(Camera& camera)
+void PhysxDynamicEntity::draw(Camera& camera)
 {
     glm::mat4 modelMatrix;
     physXMat4ToGlmMat4(_actor->getGlobalPose(), modelMatrix);
@@ -80,18 +80,60 @@ void PhysxEntity::draw(Camera& camera)
 PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isKinematic)
     : PhysxEntity(physx, model)
 {
+    //physx::PxRigidStatic
     physx::PxRigidDynamic* me = physx.getPhysics()->createRigidDynamic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
 
-  //  for (size_t i = 0; i < shapes.size(); ++i)
-  //      physx::PxRigidActorExt::createExclusiveShape(*me, shapes[i], *physx.getMaterial());
+
     physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(1, 1, 1), *physx.getMaterial());
+    physx::PxShape* shape = physx.gPhysics->createShape(physx::PxSphereGeometry(1.0f), *physx.getMaterial(), true);
+    shape->setLocalPose(physx::PxTransform(physx::PxVec3(1.0, 1.0, -5.0)));
+    me->attachShape(*shape);
 
 
+    physx::PxTransform a;
+    a.p = physx::PxVec3(0.0, 4.0, 0.0);
+  
 
     me->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
-    me->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, isKinematic);
-
     _actor = me;
 
     physx.getScene()->addActor(*_actor);
+}
+
+PhysxStaticEntity::PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isKinematic)
+    : PhysxEntity(physx, model)
+{
+    physx::PxRigidStatic* me = physx.getPhysics()->createRigidStatic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
+
+
+    physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(1, 1, 1), *physx.getMaterial());
+    physx::PxShape* shape = physx.gPhysics->createShape(physx::PxSphereGeometry(1.0f), *physx.getMaterial(), true);
+    shape->setLocalPose(physx::PxTransform(physx::PxVec3(1.0, 1.0, -5.0)));
+    me->attachShape(*shape);
+
+
+    physx::PxTransform a;
+    a.p = physx::PxVec3(0.0, 4.0, 0.0);
+
+
+    me->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
+    _actor = me;
+
+    physx.getScene()->addActor(*_actor);
+}
+
+void PhysxStaticEntity::draw(Camera& camera)
+{
+    glm::mat4 modelMatrix;
+    physXMat4ToGlmMat4(_actor->getGlobalPose(), modelMatrix);
+
+    _model->draw(modelMatrix, camera);
+}
+
+void PhysxStaticEntity::setGlobalPose(glm::mat4 transform)
+{
+    physx::PxMat44 mat;
+    glmMat4ToPhysxMat4(transform, mat);
+
+    _actor->setGlobalPose(physx::PxTransform(mat));
 }

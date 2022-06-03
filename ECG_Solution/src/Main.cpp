@@ -48,9 +48,8 @@ static bool _strafing = false;
 static float _zoom = 15.0f;
 bool keys[512];
 
-//std::vector<Geometry*> gameObjects;
 std::shared_ptr<PhysxDynamicEntity> playerEntity;
-std::vector<std::shared_ptr<PhysxDynamicEntity>> gameObjects;
+std::vector<std::shared_ptr<PhysxStaticEntity> > gameObjects;
 
 
 /* --------------------------------------------- */
@@ -221,17 +220,22 @@ int main(int argc, char** argv)
 		std::shared_ptr<Model> butterfliege = std::make_shared<Model>("assets/potted_plant_obj.obj", textureShader);
 		std::shared_ptr<Model> player = std::make_shared<Model>("assets/biene.obj", textureShader);
 
-		std::shared_ptr<PhysxDynamicEntity> treeEntity = std::make_shared<PhysxDynamicEntity>(physx, tree, geoms, false);
+		std::shared_ptr<PhysxStaticEntity> treeEntity = std::make_shared<PhysxStaticEntity>(physx, tree, geoms, false);
 		//std::shared_ptr<PhysxDynamicEntity> teapotEntity = std::make_shared<PhysxDynamicEntity>(physx, teapot, geoms, false);
-		std::shared_ptr<PhysxDynamicEntity> butterfliegeEntity = std::make_shared<PhysxDynamicEntity>(physx, butterfliege, geoms, false);
+		std::shared_ptr<PhysxStaticEntity> butterfliegeEntity = std::make_shared<PhysxStaticEntity>(physx, butterfliege, geoms, false);
 		playerEntity = std::make_shared<PhysxDynamicEntity>(physx, player, geoms, false);
 
-		treeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(-5, 0, 0)));
+		treeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(-5, 2, 0)));
 		playerEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(15, 10, 0)));
 		//teapotEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(5, 0, 0)));
 		butterfliegeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)));
 
-		gameObjects.push_back(playerEntity);
+	
+		//playerEntity->getPhysxActor()->setMaxContactImpulse(PX_MAX_F32);   damit kann man rigid body setzen für ein gebiet mehr oder weniger
+	
+	
+
+		//gameObjects.push_back(playerEntity);
 		gameObjects.push_back(treeEntity);
 		gameObjects.push_back(butterfliegeEntity);
 
@@ -264,6 +268,7 @@ int main(int argc, char** argv)
 			dt = t - dt;
 			t_sum += dt;
 			++ticks;
+			//std::cout << "frametime: " << (dt>0.01699? "problem": "ok") << "\n";
 			
 			physx.getScene()->simulate(dt); //elapsed time
 			physx.getScene()->fetchResults(true);
@@ -614,6 +619,9 @@ glm::vec3 updateMovement() {
 	}
 
 	physx::PxVec3 position = playerEntity->getPhysxActor()->getGlobalPose().p;
+
+
+	//physx::PxTransform relativePose(physx::PxQuat(physx::PxHalfPi/3, physx::PxVec3(0, 0, 1)));
 
 	physx::PxTransform a;
 	a.p = position;

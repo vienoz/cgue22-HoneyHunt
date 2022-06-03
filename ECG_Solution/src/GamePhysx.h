@@ -11,6 +11,7 @@
 #include <foundation/PxTransform.h>
 #include <foundation/PxVec3.h>
 #include <PxActor.h>
+#include <iostream>
 
 class GamePhysxCallback : public physx::PxSimulationEventCallback {
 
@@ -22,12 +23,15 @@ class GamePhysxCallback : public physx::PxSimulationEventCallback {
 
 	void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs) {
 		(void)(pairHeader);
+		//std::cout << pairs->shapes[1] << "\n";
 		physx::PxVec3 a = pairHeader.actors[1]->getGlobalPose().p;
 		collisionObj = pairHeader.actors[1];
+		collisionShapes = pairs->shapes[1];
 		//std::printf("Colission detected\n");
 	}
 public:
 	physx::PxRigidActor* collisionObj;
+	physx::PxShape* collisionShapes;
 
 };
 

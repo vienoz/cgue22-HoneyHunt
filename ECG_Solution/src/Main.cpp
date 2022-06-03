@@ -49,7 +49,8 @@ static float _zoom = 15.0f;
 bool keys[512];
 
 std::shared_ptr<PhysxDynamicEntity> playerEntity;
-std::vector<std::shared_ptr<PhysxStaticEntity> > gameObjects;
+std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
+std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
 
 
 /* --------------------------------------------- */
@@ -236,8 +237,8 @@ int main(int argc, char** argv)
 	
 
 		//gameObjects.push_back(playerEntity);
-		gameObjects.push_back(treeEntity);
-		gameObjects.push_back(butterfliegeEntity);
+		collisionStatics.push_back(treeEntity);
+		collisionStatics.push_back(butterfliegeEntity);
 
 		//treeEntity->setPosition(glm::vec3(0, 0, 0));
 		//treeEntity->setRotation(glm::vec3(0, 0, 0));
@@ -309,15 +310,21 @@ int main(int argc, char** argv)
 
 			if (physx.callback.collisionObj != NULL) {
 				int n = 0;
-				for (auto const& value : gameObjects) {
+				for (auto const& value : collisionStatics) {
 					if (value->getPhysxActor() == physx.callback.collisionObj) {
-						std::cout << "collision with obj: " << n << "\n";
-						//std::cout << gameObjects[n]->physObj->getName() << "\n";
-						physx.callback.collisionObj = NULL;
+						physx::PxShape* temp;
+						value->getPhysxActor()->getShapes(&temp, 1, 1);
+						if (temp == physx.callback.collisionShapes) {
+							std::cout<<" collision with Blüte oder so" << "\n";
+						}
+						//std::cout << "collision with obj: " << n << "\n";
+			
 					}
 					n++;
 				}
 			}
+			physx.callback.collisionObj = NULL;
+			physx.callback.collisionShapes = NULL;
 
 			//std::cout << status << std::endl;
 

@@ -86,7 +86,7 @@ PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> 
 
     physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(1, 1, 1), *physx.getMaterial());
     physx::PxShape* shape = physx.gPhysics->createShape(physx::PxSphereGeometry(1.0f), *physx.getMaterial(), true);
-    shape->setLocalPose(physx::PxTransform(physx::PxVec3(1.0, 1.0, -5.0)));
+    shape->setLocalPose(physx::PxTransform(physx::PxVec3(0.0, 0.0, 2.0)));
     me->attachShape(*shape);
 
 
@@ -100,6 +100,7 @@ PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> 
     physx.getScene()->addActor(*_actor);
 }
 
+//first shape at should always be collision relevant one, which is the sphere in this instance for whatever reason
 PhysxStaticEntity::PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isKinematic)
     : PhysxEntity(physx, model)
 {
@@ -108,7 +109,7 @@ PhysxStaticEntity::PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> mo
 
     physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(1, 1, 1), *physx.getMaterial());
     physx::PxShape* shape = physx.gPhysics->createShape(physx::PxSphereGeometry(1.0f), *physx.getMaterial(), true);
-    shape->setLocalPose(physx::PxTransform(physx::PxVec3(1.0, 1.0, -5.0)));
+    shape->setLocalPose(physx::PxTransform(physx::PxVec3(0.0, 0.0, 2.0)));
     me->attachShape(*shape);
 
 

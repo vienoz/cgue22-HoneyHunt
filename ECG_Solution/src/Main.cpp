@@ -20,6 +20,7 @@
 #include "Asset.h"
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
+#include "TextHandler.h"
 //#include <filesystem>
 
 
@@ -98,6 +99,9 @@ int main(int argc, char** argv)
 	float fov = float(reader.GetReal("camera", "fov", 60.0f));
 	float nearZ = float(reader.GetReal("camera", "near", 0.1f));
 	float farZ = float(reader.GetReal("camera", "far", 100.0f));
+
+	TextHandler txt;
+	txt.textLib;
 
 	/* --------------------------------------------- */
 	// Create context

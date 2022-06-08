@@ -17,10 +17,6 @@
 class ShaderNew
 {
 protected:
-	/*!
-	 * The shader program handle
-	 */
-	unsigned int _handle;
 
 	/*!
 	 * Path to vertex shader and fragment shader
@@ -45,6 +41,11 @@ protected:
 	GLint getUniformLocation(std::string uniform);
 
 public:
+
+	/*!
+	 * The shader program handle
+	 */
+	unsigned int _handle;
 
 	/*!
 	 * Default constructor of a simple color shader

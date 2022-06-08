@@ -100,8 +100,6 @@ int main(int argc, char** argv)
 	float nearZ = float(reader.GetReal("camera", "near", 0.1f));
 	float farZ = float(reader.GetReal("camera", "far", 100.0f));
 
-	TextHandler txt;
-	txt.textLib;
 
 	/* --------------------------------------------- */
 	// Create context
@@ -177,11 +175,15 @@ int main(int argc, char** argv)
 	glClearColor(1, 1, 1, 1);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+	//Freetype
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 	long int unsigned long ticks = 0;
 
 	GamePhysx physx;
 
+	TextHandler text;
+	text.textLib;
 
 	/* --------------------------------------------- */
 	// Initialize scene and render loop
@@ -189,6 +191,7 @@ int main(int argc, char** argv)
 	{
 		// Load shader(s)
 		std::shared_ptr<ShaderNew> textureShader = std::make_shared<ShaderNew>("assets/texture_cel.vert.glsl", "assets/texture_cel.frag.glsl");
+		text.setUpShader("assets/textShader.vert.glsl", "assets/textShader.frag.glsl");
 		//std::shared_ptr<ShaderNew> textureShader = std::make_shared<ShaderNew>("assets/identity.vert.glsl", "assets/identity.frag.glsl");
 
 		// Create textures
@@ -301,6 +304,8 @@ int main(int argc, char** argv)
 
 			// Set per-frame uniforms
 			setPerFrameUniforms(textureShader.get(), camera, dirL);
+
+			text.drawText("doing text", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 
 			// Render
 			//gameObjects[0]->draw();

@@ -1,7 +1,7 @@
 #include "Mesh.h"
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, std::shared_ptr<Material> material)
-    : _vertices(vertices), _indices(indices), _material(material)
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, std::vector<std::shared_ptr<Material> > materials)
+    : _vertices(vertices), _indices(indices), _materials(materials)
 {
     // Create VAO and check for validity
     _vaoID = 0;
@@ -50,16 +50,25 @@ Mesh::~Mesh()
     glDeleteVertexArrays(1, &_vaoID);
 }
 
+void Mesh::addMaterial(std::shared_ptr<Material> material)
+{
+    _materials.push_back(material);
+}
+
 void Mesh::draw(glm::mat4 modelMatrix, Camera& camera)
 {
-    auto shader = _material->getShader();
-
-    shader->use();
-    shader->setUniform(0, modelMatrix);
-    shader->setUniform(1, camera.getViewMatrix());
-    shader->setUniform(2, camera.getProjMatrix());
-    _material->setUniforms();
-
     glBindVertexArray(_vaoID);
-    glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
+
+    for (size_t i = 0; i < _materials.size(); ++i)
+    {
+        auto shader = _materials[i]->getShader();
+
+        shader->use();
+        shader->setUniform(0, modelMatrix);
+        shader->setUniform(1, camera.getViewMatrix());
+        shader->setUniform(2, camera.getProjMatrix());
+        _materials[i]->setUniforms();
+
+        glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
+    }
 }

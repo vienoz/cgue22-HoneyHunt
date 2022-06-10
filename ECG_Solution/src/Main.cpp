@@ -192,64 +192,42 @@ int main(int argc, char** argv)
 		// Load shader(s)
 		std::shared_ptr<ShaderNew> textureShader = std::make_shared<ShaderNew>("assets/texture_cel.vert.glsl", "assets/texture_cel.frag.glsl");
 		text.setUpShader("assets/textShader.vert.glsl", "assets/textShader.frag.glsl");
-		//std::shared_ptr<ShaderNew> textureShader = std::make_shared<ShaderNew>("assets/identity.vert.glsl", "assets/identity.frag.glsl");
 
-		// Create textures
-		//std::shared_ptr<Texture> woodTexture = AssetManager::getInstance()->getTexture("assets/textures/wood_texture.dds");
-		//std::shared_ptr<Texture> tileTexture = AssetManager::getInstance()->getTexture("assets/textures/bee.dds");
+		std::shared_ptr<TextureMaterial> playerShader = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"));
 
-		// Create materials
-		//std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture);
-		//std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, tileTexture);
+
+		auto woodShader = std::make_shared<ShaderNew>("assets/wood.vert.glsl", "assets/wood.frag.glsl");
+		auto woodMaterial = std::make_shared<Material>(woodShader, glm::vec3(0), 1.0f);
 
 		AssetManager::getInstance()->defaultMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"));
 
-
-
-		// Create geometry
-
-		//Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 5.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 5.0f, 0.0f), 1.0f, phys.getMaterial(), phys.getPhysics()), woodTextureMaterial);
-		//Geometry cube2 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 1.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f, glm::vec3(1.5f, 1.0f, 0.0f), 0.0f, phys.getMaterial(), phys.getPhysics()), tileTextureMaterial);
-		//Geometry player = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 3.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f, glm::vec3(-1.5f, 3.0f, 0.0f), phys.getMaterial(), phys.getPhysics()), tileTextureMaterial);
-
-		//gameObjects.push_back(&player);
-		//gameObjects.push_back(&cube);
-		//gameObjects.push_back(&cube2);
-
-		//phys.getScene()->addActor(*cube.physObj);
-		//phys.getScene()->addActor(*cube2.physObj);s
-		//phys.getScene()->addActor(*player.physObj);
 		
 		std::vector<physx::PxGeometry> geoms;
-		//geoms.push_back(physx::PxBoxGeometry(4.f, 4.f, 4.f));
 
-		std::shared_ptr<Model> tree = std::make_shared<Model>("assets/Lowpoly_tree_sample.obj", textureShader);
+		std::shared_ptr<Model> tree = std::make_shared<Model>("assets/Lowpoly_tree_sample.obj", woodShader);
 		//std::shared_ptr<Model> teapot = std::make_shared<Model>("assets/dragön.fbx", textureShader);
-		std::shared_ptr<Model> butterfliege = std::make_shared<Model>("assets/potted_plant_obj.obj", textureShader);
+		std::shared_ptr<Model> plant = std::make_shared<Model>("assets/potted_plant_obj.obj", textureShader);
 		std::shared_ptr<Model> player = std::make_shared<Model>("assets/biene.obj", textureShader);
+		//std::shared_ptr<Model> player2 = std::make_shared<Model>("assets/sphere.obj", playerShader);
 
 		std::shared_ptr<PhysxStaticEntity> treeEntity = std::make_shared<PhysxStaticEntity>(physx, tree, geoms, false);
 		//std::shared_ptr<PhysxDynamicEntity> teapotEntity = std::make_shared<PhysxDynamicEntity>(physx, teapot, geoms, false);
-		std::shared_ptr<PhysxStaticEntity> butterfliegeEntity = std::make_shared<PhysxStaticEntity>(physx, butterfliege, geoms, false);
+		std::shared_ptr<PhysxStaticEntity> plantEntity = std::make_shared<PhysxStaticEntity>(physx, plant, geoms, false);
+
+
 		playerEntity = std::make_shared<PhysxDynamicEntity>(physx, player, geoms, false);
+		
+
 
 		treeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(-5, 2, 0)));
 		playerEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(15, 10, 0)));
 		//teapotEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(5, 0, 0)));
-		butterfliegeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)));
+		plantEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)));
 
-	
-		//playerEntity->getPhysxActor()->setMaxContactImpulse(PX_MAX_F32);   damit kann man rigid body setzen für ein gebiet mehr oder weniger
-	
-	
 
-		//gameObjects.push_back(playerEntity);
 		collisionStatics.push_back(treeEntity);
-		collisionStatics.push_back(butterfliegeEntity);
+		collisionStatics.push_back(plantEntity);
 
-		//treeEntity->setPosition(glm::vec3(0, 0, 0));
-		//treeEntity->setRotation(glm::vec3(0, 0, 0));
-		//treeEntity->setScale(glm::vec3(1, 1, 1));
 
 		// Initialize camera
 		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
@@ -276,46 +254,26 @@ int main(int argc, char** argv)
 			dt = t - dt;
 			t_sum += dt;
 			++ticks;
-			//std::cout << "frametime: " << (dt>0.01699? "problem": "ok") << "\n";
-			
+
 			physx.getScene()->simulate(dt); //elapsed time
 			physx.getScene()->fetchResults(true);
-			//physx.getScene()->collide(dt);
-			//physx.getScene()->fetchCollision(true);
-			//physx.getScene()->advance();
-			
-			//gScene->fetchCollision(true);
 
-			//physx.getScene()->collide(dt);
-			//physx.getScene()->fetchCollision(true);
-			//physx.getScene()->advance(); // Can this be skipped
-			//physx.getScene()->fetchResults(true);
-
-
-			// Clear backbuffer
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			// Poll events
 			glfwPollEvents();
 
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement());
 
-			// Set per-frame uniforms
 			setPerFrameUniforms(textureShader.get(), camera, dirL);
 
 			text.drawText("doing text", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 
-			// Render
-			//gameObjects[0]->draw();
-			//gameObjects[1]->draw();
-			//gameObjects[2]->draw();
-			
+
 			//teapotEntity->draw(camera);
 			playerEntity->draw(camera);
 			treeEntity->draw(camera);
-			butterfliegeEntity->draw(camera);
+			plantEntity->draw(camera);
 
 			if (physx.callback.collisionObj != NULL) {
 				int n = 0;
@@ -326,8 +284,6 @@ int main(int argc, char** argv)
 						if (temp == physx.callback.collisionShapes) {
 							std::cout<<" collision with Blüte oder so" << "\n";
 						}
-						//std::cout << "collision with obj: " << n << "\n";
-			
 					}
 					n++;
 				}
@@ -335,13 +291,7 @@ int main(int argc, char** argv)
 			physx.callback.collisionObj = NULL;
 			physx.callback.collisionShapes = NULL;
 
-			//std::cout << status << std::endl;
-
-
-			// Swap buffers
  			glfwSwapBuffers(window);
-
-			//std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
 		}
 	}
 

@@ -38,6 +38,8 @@ public:
     Model(const std::string& path, std::shared_ptr<ShaderNew> shader);
     ~Model();
 
+    void addMaterial(std::shared_ptr<Material> material);
+
     void draw(glm::mat4 modelMatrix, Camera& camera);
 
     // draws the model, and thus all its meshes

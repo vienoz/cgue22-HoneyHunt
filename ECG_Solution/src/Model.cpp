@@ -115,12 +115,22 @@ Mesh* Model::processMesh(aiMesh* mesh, const aiScene* scene, std::shared_ptr<Sha
         if (textures.size() > 0)
             ownMaterial = std::make_shared<TextureMaterial>(shader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, textures[0]);
         else
-            ownMaterial = AssetManager::getInstance()->defaultMaterial;    
+            ownMaterial = std::make_shared<Material>(shader, glm::vec3(0), 1.0f);
+            //ownMaterial = AssetManager::getInstance()->defaultMaterial;    
     }
     else
         ownMaterial = AssetManager::getInstance()->defaultMaterial;
 
-    return new Mesh(vertices, indices, ownMaterial);
+    std::vector<std::shared_ptr<Material> > vec;
+    vec.push_back(ownMaterial);
+
+    return new Mesh(vertices, indices, vec);
+}
+
+void Model::addMaterial(std::shared_ptr<Material> material)
+{
+    for (size_t i = 0; i < _meshes.size(); ++i)
+        _meshes[i]->addMaterial(material);
 }
 
 void Model::draw(glm::mat4 modelMatrix, Camera& camera)

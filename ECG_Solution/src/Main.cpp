@@ -36,7 +36,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 float getPlayerDistance(glm::vec3 position);
-std::shared_ptr<PhysxStaticEntity> getLODModel(std::vector<std::shared_ptr<PhysxStaticEntity> >, float cameraDistance);
 glm::vec3 updateMovement();
 
 std::shared_ptr<LODModel> InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
@@ -175,6 +174,7 @@ int main(int argc, char** argv)
 
 	// set GL defaults
 	glClearColor(1, 1, 1, 1);
+	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
 	//Freetype
@@ -194,13 +194,17 @@ int main(int argc, char** argv)
 		// Load shader(s)
 		auto celShader = AssetManager::getInstance()->getShader("assets/texture_cel");
 		auto woodShader = AssetManager::getInstance()->getShader("assets/wood");
-		auto frameBufferProgram = AssetManager::getInstance()->getShader("assets/framebuffer");
+		auto framebufferProgram = AssetManager::getInstance()->getShader("assets/framebuffer");
 		AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
 
 		auto defaultMaterial = AssetManager::getInstance()->defaultMaterial;
 		std::shared_ptr<BaseMaterial> playerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
 		std::shared_ptr<BaseMaterial> woodMaterial = std::make_shared<BaseMaterial>(woodShader);
-		 
+		std::shared_ptr<OutlineShadedMaterial> outlineMaterial= std::make_shared<OutlineShadedMaterial>(framebufferProgram);
+		
+		//TODO: make outline testing clean
+		//framebufferProgram->use();
+		//glUniform1i(glGetUniformLocation(frameBufferProgram->ID, AssetManager::getInstance()->getTexture("assets/textures/white.dds")), 0);
 
 		std::vector<physx::PxGeometry> geoms;
 		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/sphere.obj", defaultMaterial);
@@ -225,9 +229,9 @@ int main(int argc, char** argv)
 		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 
-
 		//--------------------frame buffers (post processing)------------------------
 		
+		// Prepare framebuffer rectangle VBO and VAO
 		unsigned int rectVAO, rectVBO;
 		glGenVertexArrays(1, &rectVAO);
 		glGenBuffers(1, &rectVBO);
@@ -235,31 +239,34 @@ int main(int argc, char** argv)
 		glBindBuffer(GL_ARRAY_BUFFER, rectVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), &rectangleVertices, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2 ,GL_FLOAT, GL_FALSE, 4* sizeof(float), (void*)0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2 ,GL_FLOAT, GL_FALSE, 4* sizeof(float), (void*)(2 * sizeof(float)));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 		
-
-		unsigned int FBO;
-		glGenFramebuffers(1, &FBO);
-		glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+		// Create Frame Buffer Object
+		unsigned int fbo;
+		glGenFramebuffers(1, &fbo);
+		//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		
-		unsigned int frameBufferTexture;
-		glGenTextures(1, &frameBufferTexture);
-		glBindTexture(GL_TEXTURE_2D, frameBufferTexture);
+		// Create Framebuffer Texture
+		unsigned int framebufferTexture;
+		glGenTextures(1, &framebufferTexture);
+		glBindTexture(GL_TEXTURE_2D, framebufferTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, frameBufferTexture, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, 0);
 
-		unsigned int RBO;
-		glGenFramebuffers(1, &RBO);
-		glBindFramebuffer(GL_RENDERBUFFER, RBO);
+		// Create Render Buffer Object
+		unsigned int rbo;
+		glGenRenderbuffers(1, &rbo);
+		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width, window_height);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
+		// Error checking framebuffer
 		auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
 			std::cout << "Framebuffer error: " << fboStatus << std::endl;
@@ -284,7 +291,8 @@ int main(int argc, char** argv)
 
 
 			//render buffer setup 
-			//glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+			//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glEnable(GL_DEPTH_TEST);
 			
@@ -295,12 +303,8 @@ int main(int argc, char** argv)
 
 			// draw
 			playerEntity->draw(camera, dirL);
-
-			//maybe it is magic now TODO
 			_octtree.setLodIDs(playerEntity->getPosition());
 			_octtree.draw(camera, dirL);
-
-			//plantEntity->draw(camera);
 
 			text.drawText("doing text", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 
@@ -322,24 +326,25 @@ int main(int argc, char** argv)
 			physx.callback.collisionShapes = NULL;
 
 			
-			//render buffered texture
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			// Bind the default framebuffer
+			/*glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			framebufferProgram->use();
 			glBindVertexArray(rectVAO);
-			glDisable(GL_DEPTH_TEST);
-			glBindTexture(GL_TEXTURE_2D, frameBufferTexture);
+			glDisable(GL_DEPTH_TEST); // prevents framebuffer rectangle from being discarded
+			glBindTexture(GL_TEXTURE_2D, framebufferTexture);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
-			
+			*/
  			glfwSwapBuffers(window);
 			glfwPollEvents();
 		}
+		
+		// Clean-up
+		//glDeleteFramebuffers(1, &FBO);
+		destroyFramework();
+		glfwDestroyWindow(window);
+		glfwTerminate();
+		AssetManager::destroy();
 	}
-
-
-	// Clean-up
-	destroyFramework();
-	glfwTerminate();
-	AssetManager::destroy();
-
 	return EXIT_SUCCESS;
 }
 

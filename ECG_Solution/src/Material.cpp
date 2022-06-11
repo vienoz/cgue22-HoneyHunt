@@ -71,3 +71,21 @@ void CelShadedMaterial::setUniforms(glm::mat4 modelMatrix, Camera& camera, Direc
 	_shader->setUniform(6, _materialCoefficients);
 	_shader->setUniform(7, _alpha);
 }
+
+/* --------------------------------------------- */
+// Outline-shaded material
+/* --------------------------------------------- */
+
+OutlineShadedMaterial::OutlineShadedMaterial(std::shared_ptr<ShaderNew> shader)
+	: BaseMaterial(shader){
+}
+
+OutlineShadedMaterial::~OutlineShadedMaterial()
+{
+}
+
+void OutlineShadedMaterial::setUniforms(glm::vec4& texture)
+{
+	_fragColor->bind(0);
+	_shader->setUniform(0, texture);
+}

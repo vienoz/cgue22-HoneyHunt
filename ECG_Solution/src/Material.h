@@ -98,3 +98,24 @@ public:
 	 */
 	virtual void setUniforms(glm::mat4 modelMatrix, Camera& camera, DirectionalLight& dirL);
 };
+
+class OutlineShadedMaterial : public BaseMaterial
+{
+protected:
+	std::shared_ptr<Texture> _fragColor;
+
+public:
+	/*!
+	 * Texture material constructor
+	 * @param shader: The shader used for rendering this material
+	 * @param diffuseTexture: The diffuse texture of this material
+	 */
+	OutlineShadedMaterial(std::shared_ptr<ShaderNew> shader);
+
+	virtual ~OutlineShadedMaterial();
+
+	/*!
+	 * Set's this material's parameters as uniforms in the shader
+	 */
+	virtual void setUniforms(glm::vec4& texture);
+};

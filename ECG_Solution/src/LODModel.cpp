@@ -21,7 +21,9 @@ LODModel::~LODModel()
 
 
 std::shared_ptr<PhysxStaticEntity> LODModel::getModel(int id) {
-	return _models[id];
+	if(_models.size() > 0 && id >= 0 && id < _models.size())
+		return _models[id];
+	return _models[_models.size() - 1];
 }
 
 std::shared_ptr<PhysxStaticEntity> LODModel::getActiveModel() {

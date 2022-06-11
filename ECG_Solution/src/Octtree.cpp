@@ -109,10 +109,12 @@ void Octtree::draw(Camera camera) {
 void Octtree::setLodIDs(glm::vec3 playerPosition) {
     if (!_hasDivided) {
         int id;
-        if (glm::distance(_origin, playerPosition) < _max_LOD_distance)
+        if (glm::distance(_origin, playerPosition) < _LOD_distance_1)
             id = 0;
-        else
+        else if (glm::distance(_origin, playerPosition) < _LOD_distance_2)
             id = 1;
+        else
+            id = 2;
 
         for (auto& node : _nodes)
             node.setLodID(id);

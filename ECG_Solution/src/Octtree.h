@@ -18,7 +18,8 @@
 class Octtree
 {
 protected:
-    float _max_LOD_distance = 30.0f;
+    float _LOD_distance_1 = 20.0f;
+    float _LOD_distance_2 = 40.0f;
 
     std::vector<OcttreeNode> _nodes;
     std::vector<Octtree> _subtrees;

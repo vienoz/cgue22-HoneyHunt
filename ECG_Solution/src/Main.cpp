@@ -202,9 +202,9 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	{
 		// Load shader(s)
-		std::shared_ptr<ShaderNew> textureShader = std::make_shared<ShaderNew>("assets/texture_cel.vert.glsl", "assets/texture_cel.frag.glsl");
+		auto textureShader = std::make_shared<ShaderNew>("assets/texture_cel.vert.glsl", "assets/texture_cel.frag.glsl");
 		text.setUpShader("assets/textShader.vert.glsl", "assets/textShader.frag.glsl");
-		std::shared_ptr<TextureMaterial> playerShader = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"));
+		std::shared_ptr<TextureMaterial> playerMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"));
 		auto woodShader = std::make_shared<ShaderNew>("assets/wood.vert.glsl", "assets/wood.frag.glsl");
 		//auto woodMaterial = std::make_shared<Material>(woodShader, glm::vec3(0), 1.0f);
 		AssetManager::getInstance()->defaultMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"));
@@ -219,10 +219,10 @@ int main(int argc, char** argv)
 		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(100.0f, 100.0f, 100.0f), 8);		
 
-		std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj"};
-		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, textureShader, glm::mat4(1), glm::vec3(-5, 2, 0), geoms, physx)));
+		std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj", "assets/sphere.obj" };
+		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, woodShader, glm::mat4(1), glm::vec3(-5, 2, 0), geoms, physx)));
 
-		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj" };
+		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj", "assets/sphere.obj" };
 		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, textureShader, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx)));
 
 		_octtree.print();

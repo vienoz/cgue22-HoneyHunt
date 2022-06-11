@@ -16,6 +16,9 @@ layout(location = 2) uniform mat4 projMatrix;
 
 layout(location = 3) uniform vec3 cameraWorld;
 
+layout(location = 4) uniform vec3 dirLColor;
+layout(location = 5) uniform vec3 dirLDirection;
+
 void main() {
 	vert.normal_world = mat3(transpose(inverse(modelMatrix))) * normal;
 	vert.uv = uv;

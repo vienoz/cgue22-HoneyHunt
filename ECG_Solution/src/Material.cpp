@@ -29,6 +29,9 @@ void BaseMaterial::setUniforms(glm::mat4 modelMatrix, Camera& camera, Directiona
 	_shader->setUniform(1, camera.getViewMatrix());
 	_shader->setUniform(2, camera.getProjMatrix());
 	_shader->setUniform(3, camera.getPosition());
+
+	_shader->setUniform(4, dirL.color);
+	_shader->setUniform(5, dirL.direction);
 }
 
 /* --------------------------------------------- */
@@ -49,6 +52,10 @@ void TextureMaterial::setUniforms(glm::mat4 modelMatrix, Camera& camera, Directi
 	BaseMaterial::setUniforms(modelMatrix, camera, dirL);
 
 	_diffuseTexture->bind(0);
+}
+
+std::shared_ptr<Texture> TextureMaterial::getTexture() {
+	return _diffuseTexture;
 }
 
 /* --------------------------------------------- */

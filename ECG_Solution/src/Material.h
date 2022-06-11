@@ -6,6 +6,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <glm/glm.hpp>
 #include "ShaderNew.h"
 #include "Texture.h"
@@ -70,6 +71,7 @@ public:
 	 * Set's this material's parameters as uniforms in the shader
 	 */
 	virtual void setUniforms(glm::mat4 modelMatrix, Camera& camera, DirectionalLight& dirL);
+	virtual std::shared_ptr<Texture> getTexture();
 };
 
 /*

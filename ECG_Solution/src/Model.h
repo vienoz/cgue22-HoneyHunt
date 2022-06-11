@@ -9,6 +9,8 @@
 #include "Mesh.h"
 #include "ShaderNew.h"
 #include "Asset.h"
+#include "Material.h"
+#include "Light.h"
 
 #include <string>
 #include <fstream>
@@ -16,6 +18,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <memory>
 
 class Model
 {
@@ -31,8 +34,6 @@ protected:
     void processNode(aiNode* node, const aiScene* scene);
 
     Mesh* processMesh(aiMesh* mesh, const aiScene* scene);
-
-    std::vector<std::shared_ptr<Texture> > loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 
 public:
     // constructor, expects a filepath to a 3D model.

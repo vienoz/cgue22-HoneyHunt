@@ -23,6 +23,8 @@
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
 #include "TextHandler.h"
+#include <random>
+
 //#include <filesystem>
 
 
@@ -35,15 +37,17 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-float getPlayerDistance(glm::vec3 position);
 glm::vec3 updateMovement();
 
-std::shared_ptr<LODModel> InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
+LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
 std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
 std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
+
+void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier, std
+	::shared_ptr<BaseMaterial> material, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
 
 /* --------------------------------------------- */
 // Global variables
@@ -214,15 +218,16 @@ int main(int argc, char** argv)
 		playerEntity = InitDynamicEntity("assets/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx);
 
 		// ----------------------------init dynamic(LOD) models--------------
-		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(100.0f, 100.0f, 100.0f), 8);		
+		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4);		
 
-		std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj", "assets/sphere.obj" };
-		_octtree.insert(new OcttreeNode(InitLodModel(treeModelPaths, woodMaterial, glm::mat4(1), glm::vec3(-5, 2, 0), geoms, physx)));
+		//std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj", "assets/sphere.obj" };
+		//_octtree.insert(new OcttreeNode(InitLodModel(treeModelPaths, woodMaterial, glm::mat4(1), glm::vec3(-5, 2, 0), geoms, physx)));
+		GenerateTrees(50, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), 1.0f, woodMaterial, geoms, physx);
 
 		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj", "assets/sphere.obj" };
-		_octtree.insert(new OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx)));
+		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx)));
 
-		_octtree.print();
+		//_octtree.print();
 
 		
 		// ----------------------------init scene----------------------------
@@ -230,7 +235,7 @@ int main(int argc, char** argv)
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 
 		//--------------------frame buffers (post processing)------------------------
-		
+		/*
 		// Prepare framebuffer rectangle VBO and VAO
 		unsigned int rectVAO, rectVBO;
 		glGenVertexArrays(1, &rectVAO);
@@ -257,20 +262,20 @@ int main(int argc, char** argv)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, 0);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, 0);
 
 		// Create Render Buffer Object
 		unsigned int rbo;
 		glGenRenderbuffers(1, &rbo);
 		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width, window_height);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+		//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
 		// Error checking framebuffer
 		auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
 			std::cout << "Framebuffer error: " << fboStatus << std::endl;
-
+		*/
 			
 		//-----------------------------------Render loop------------------------------------
 		float t = float(glfwGetTime());
@@ -348,17 +353,11 @@ int main(int argc, char** argv)
 	return EXIT_SUCCESS;
 }
 
-
-float getPlayerDistance(glm::vec3 position){
-	float distance = glm::distance(position, playerEntity->getPosition());
-	return distance;
-}
-
 std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material, 
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx)
 {
-	std::shared_ptr<Model> temp = std::make_shared<Model>(modelPath, material);
-	std::shared_ptr<PhysxStaticEntity> entity = std::make_shared<PhysxStaticEntity>(physx, temp, geoms, false);
+	std::shared_ptr<Model> model = std::make_shared<Model>(modelPath, material);
+	std::shared_ptr<PhysxStaticEntity> entity = std::make_shared<PhysxStaticEntity>(physx, model, geoms, false);
 	entity->setGlobalPose(glm::translate(rotation, position));
 	collisionStatics.push_back(entity);
 	return entity;
@@ -367,18 +366,18 @@ std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::share
 std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx)
 {
-	std::shared_ptr<Model> temp = std::make_shared<Model>(modelPath, material);
-	std::shared_ptr<PhysxDynamicEntity> entity = std::make_shared<PhysxDynamicEntity>(physx, temp, geoms, false);
+	std::shared_ptr<Model> model = std::make_shared<Model>(modelPath, material);
+	std::shared_ptr<PhysxDynamicEntity> entity = std::make_shared<PhysxDynamicEntity>(physx, model, geoms, false);
 	entity->setGlobalPose(glm::translate(rotation, position));
 	return entity;
 }
 
-std::shared_ptr<LODModel> InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
+LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx)
 {
-	auto models = std::make_shared<LODModel>();
+	LODModel models;
 	for (auto const& path : modelPaths)
-		models->addModel(InitStaticEntity(path, material, rotation, position, geoms, physx));
+		models.addModel(InitStaticEntity(path, material, rotation, position, geoms, physx));
 
 	return models;
 }
@@ -403,6 +402,21 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	_zoom -= float(yoffset) * 0.5f;
+}
+
+void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
+	std::shared_ptr<BaseMaterial> material, std::vector<physx::PxGeometry> geoms, GamePhysx physx) {
+	std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj", "assets/sphere.obj" };
+
+	//create advanced random values for x and y
+	std::random_device dev;
+	std::mt19937 rng(dev());
+	std::uniform_int_distribution<std::mt19937::result_type> distX(min.x, max.x); // distribution in range [minX, maxX]
+	std::uniform_int_distribution<std::mt19937::result_type> distZ(min.y, max.y); // distribution in range [minY, maxY]
+	
+	for (uint32_t i = 0; i < count; ++i)
+		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, material, 
+			glm::mat4(1), glm::vec3(distX(rng)-(max.x/2), 0, distZ(rng)- (max.y / 2)), geoms, physx)));
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)

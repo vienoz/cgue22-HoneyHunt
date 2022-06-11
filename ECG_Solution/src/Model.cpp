@@ -1,6 +1,5 @@
 #include "Model.h"
 
-#include "Light.h"
 
 Model::Model(const std::string& path, std::shared_ptr<BaseMaterial> material)
     : _material(material)
@@ -77,6 +76,11 @@ Mesh* Model::processMesh(aiMesh* mesh, const aiScene* scene)
             vertex.normal = glm::vec3(0, 0, 0);
 
         vertices.push_back(vertex);
+
+        //set texture
+        //std::shared_ptr<TextureMaterial> tm = std::dynamic_pointer_cast<TextureMaterial>(_material);
+        //if(tm)
+        //    tm = tm->getShader(), tm->getTexture();
     }
 
     for (size_t i = 0; i < mesh->mNumFaces; i++)
@@ -94,6 +98,27 @@ std::shared_ptr<BaseMaterial> Model::getMaterial()
 {
     return _material;
 }
+
+/*
+if (mesh->mMaterialIndex >= 0)
+    {
+        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+        std::vector<std::shared_ptr<Texture> > diffuseMaps = loadMaterialTextures(material,
+                                            aiTextureType_DIFFUSE, "texture_diffuse");
+
+        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+        std::vector<std::shared_ptr<Texture> > specularMaps = loadMaterialTextures(material,
+                                            aiTextureType_SPECULAR, "texture_specular");
+        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+
+        if (textures.size() > 0)
+            ownMaterial = std::make_shared<TextureMaterial>(shader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, textures[0]);
+        else
+            ownMaterial = AssetManager::getInstance()->defaultMaterial;
+    }
+    else
+        ownMaterial = AssetManager::getInstance()->defaultMaterial;
+*/
 
 void Model::draw(glm::mat4 modelMatrix, Camera& camera, DirectionalLight& dirL)
 {

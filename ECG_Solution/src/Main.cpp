@@ -44,6 +44,8 @@ LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<ShaderNew>
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
 std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<ShaderNew> shader,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
+std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<ShaderNew> shader,
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
 
 /* --------------------------------------------- */
 // Global variables
@@ -202,27 +204,19 @@ int main(int argc, char** argv)
 		// Load shader(s)
 		std::shared_ptr<ShaderNew> textureShader = std::make_shared<ShaderNew>("assets/texture_cel.vert.glsl", "assets/texture_cel.frag.glsl");
 		text.setUpShader("assets/textShader.vert.glsl", "assets/textShader.frag.glsl");
-
 		std::shared_ptr<TextureMaterial> playerShader = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"));
-
-
 		auto woodShader = std::make_shared<ShaderNew>("assets/wood.vert.glsl", "assets/wood.frag.glsl");
 		//auto woodMaterial = std::make_shared<Material>(woodShader, glm::vec3(0), 1.0f);
-
 		AssetManager::getInstance()->defaultMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"));
 
 		std::vector<physx::PxGeometry> geoms;
 		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/sphere.obj", textureShader);
 		_fallbackEntity = std::make_shared<PhysxStaticEntity>(physx, fallbackModel, geoms, false);
 
+		// ----------------------------init static models--------------------
+		playerEntity = InitDynamicEntity("assets/biene.obj", textureShader, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx);
 
-		//player
-		std::shared_ptr<Model> player = std::make_shared<Model>("assets/biene.obj", textureShader);
-		playerEntity = std::make_shared<PhysxDynamicEntity>(physx, player, geoms, false);
-		playerEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(15, 10, 0)));
-
-
-		// ----------------------------init LOD models----------------------------
+		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(100.0f, 100.0f, 100.0f), 8);		
 
 		std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj"};
@@ -232,7 +226,6 @@ int main(int argc, char** argv)
 		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, textureShader, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx)));
 
 		_octtree.print();
-
 
 		// ----------------------------init scene----------------------------
 		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
@@ -338,6 +331,15 @@ std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::share
 	std::shared_ptr<PhysxStaticEntity> entity = std::make_shared<PhysxStaticEntity>(physx, temp, geoms, false);
 	entity->setGlobalPose(glm::translate(rotation, position));
 	collisionStatics.push_back(entity);
+	return entity;
+}
+
+std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<ShaderNew> shader,
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx)
+{
+	std::shared_ptr<Model> temp = std::make_shared<Model>(modelPath, shader);
+	std::shared_ptr<PhysxDynamicEntity> entity = std::make_shared<PhysxDynamicEntity>(physx, temp, geoms, false);
+	entity->setGlobalPose(glm::translate(rotation, position));
 	return entity;
 }
 

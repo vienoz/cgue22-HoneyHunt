@@ -1,5 +1,6 @@
 #include "Octtree.h"
 
+bool Octtree::IsLodActive = true;
 
 Octtree::Octtree(glm::vec3 origin, glm::vec3 maxDimension, int capacity)
 {
@@ -8,7 +9,6 @@ Octtree::Octtree(glm::vec3 origin, glm::vec3 maxDimension, int capacity)
     _origin = origin;
     _hasDivided = false;
     _index = 0;
-    IsLodActive = true;
 }
 
 Octtree::Octtree() {
@@ -21,22 +21,16 @@ Octtree::~Octtree()
 }
 
 void Octtree::insert(OcttreeNode node) {
-    if (!contains(node.getPosition())) {
-        std::cout << "not contains Node.." << std::endl;
+    if (!contains(node.getPosition()))
         return;
-    }
 
-    if (_nodes.size() < _capacity) {
-        std::cout<< "Add Node.." << std::endl;
+    if (_nodes.size() < _capacity) 
         _nodes.push_back(node);
-    }
-    else {
-        if (!_hasDivided) {
-            std::cout << "divide.." << std::endl;
+    else 
+    {
+        if (!_hasDivided) 
             subdivide();
-        }
 
-        //std::cout << "Add Node to children.." << std::endl;
         for (auto& subtree : _subtrees) {
             subtree.insert(node);
         }
@@ -50,11 +44,6 @@ void Octtree::subdivide() {
     glm::vec3 newDimension = glm::vec3(offsetX, offsetY, offsetZ);
     _hasDivided = true;
     glm::vec3 newOrigin; // right = +x, up = +y, forward = +z
-
-
-    //std::cout << "PRE TREE ADD" << std::endl;
-    //std::cout << "_nodes size: " << _nodes.size() << ", ";
-    //std::cout << "_subtrees size: " << _subtrees.size() << std::endl;
 
     // cube dimension calculations
     newOrigin = glm::vec3(_origin.x + offsetX, _origin.y - offsetY, _origin.z + offsetZ);
@@ -74,26 +63,14 @@ void Octtree::subdivide() {
     newOrigin = glm::vec3(_origin.x - offsetX, _origin.y + offsetY, _origin.z - offsetZ);
     _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity));
 
-    //std::cout << "POST TREE ADD" << std::endl;
-    //std::cout<< "_nodes size: " << _nodes.size() << ", ";
-    //std::cout<< "_subtrees size: " << _subtrees.size() << std::endl;
-
     for (auto& node: _nodes)
         for (auto& subtree : _subtrees) {
-            //std::cout << "PRE GoDeeper:" << subtree._nodes.size();
             subtree.insert(node);
-            //std::cout << "POST GoDeeper:"  << subtree._nodes.size() << std::endl;
         }
 
 }
 
 bool Octtree::contains(glm::vec3 point) {
-
-    std::cout << "Check Contains:" << std::endl;
-    std::cout << "Point: x:  " << point.x << ", y:  " << point.y << ", z:  " << point.z << std::endl;
-    std::cout << "Min:   x:  " << _origin.x - _maxDimension.x << ", y:  " << _origin.y - _maxDimension.y << ", z:  " << _origin.z - _maxDimension.z << std::endl;
-    std::cout << "Max:   x:  " << _origin.x + _maxDimension.x << ", y:  " << _origin.y + _maxDimension.y << ", z:  " << _origin.z + _maxDimension.z << std::endl << std::endl;
-
     if (point.x >= _origin.x - _maxDimension.x && point.x < _origin.x + _maxDimension.x &&
         point.y >= _origin.y - _maxDimension.y && point.y < _origin.y + _maxDimension.y &&
         point.z >= _origin.z - _maxDimension.z && point.z < _origin.z + _maxDimension.z)
@@ -113,8 +90,9 @@ void Octtree::print() {
 void Octtree::draw(Camera& camera, DirectionalLight& dirL) {
     if (!_hasDivided)
         for (auto& node : _nodes) {
-            if(IsLodActive)
+            if (Octtree::IsLodActive) {
                 node.getLodModels()->drawActive(camera, dirL);
+            }
             else
                 node.getLodModels()->draw(camera, dirL, 0); //0 is default lod
         }

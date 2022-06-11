@@ -112,7 +112,7 @@ int main(int argc, char** argv)
 	std::string window_title = reader.Get("window", "title", "HoneyHero");
 	float fov = float(reader.GetReal("camera", "fov", 60.0f));
 	float nearZ = float(reader.GetReal("camera", "near", 0.1f));
-	float farZ = float(reader.GetReal("camera", "far", 100.0f));
+	float farZ = float(reader.GetReal("camera", "far", 1000.0f));
 
 
 	// Create context
@@ -219,10 +219,7 @@ int main(int argc, char** argv)
 
 		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4);		
-
-		//std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj", "assets/sphere.obj" };
-		//_octtree.insert(new OcttreeNode(InitLodModel(treeModelPaths, woodMaterial, glm::mat4(1), glm::vec3(-5, 2, 0), geoms, physx)));
-		GenerateTrees(50, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), 1.0f, woodMaterial, geoms, physx);
+		GenerateTrees(25, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), 1.0f, woodMaterial, geoms, physx);
 
 		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj", "assets/sphere.obj" };
 		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx)));
@@ -235,7 +232,7 @@ int main(int argc, char** argv)
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 
 		//--------------------frame buffers (post processing)------------------------
-		/*
+		
 		// Prepare framebuffer rectangle VBO and VAO
 		unsigned int rectVAO, rectVBO;
 		glGenVertexArrays(1, &rectVAO);
@@ -251,7 +248,7 @@ int main(int argc, char** argv)
 		// Create Frame Buffer Object
 		unsigned int fbo;
 		glGenFramebuffers(1, &fbo);
-		//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		
 		// Create Framebuffer Texture
 		unsigned int framebufferTexture;
@@ -262,20 +259,20 @@ int main(int argc, char** argv)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
-		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, 0);
 
 		// Create Render Buffer Object
 		unsigned int rbo;
 		glGenRenderbuffers(1, &rbo);
 		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width, window_height);
-		//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
 		// Error checking framebuffer
 		auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
 			std::cout << "Framebuffer error: " << fboStatus << std::endl;
-		*/
+		
 			
 		//-----------------------------------Render loop------------------------------------
 		float t = float(glfwGetTime());
@@ -294,9 +291,8 @@ int main(int argc, char** argv)
 			physx.getScene()->simulate(dt); //elapsed time
 			physx.getScene()->fetchResults(true);
 
-
 			//render buffer setup 
-			//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 			glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glEnable(GL_DEPTH_TEST);
@@ -308,6 +304,7 @@ int main(int argc, char** argv)
 
 			// draw
 			playerEntity->draw(camera, dirL);
+			
 			_octtree.setLodIDs(playerEntity->getPosition());
 			_octtree.draw(camera, dirL);
 
@@ -329,16 +326,16 @@ int main(int argc, char** argv)
 			}
 			physx.callback.collisionObj = NULL;
 			physx.callback.collisionShapes = NULL;
-
+			
 			
 			// Bind the default framebuffer
-			/*glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			framebufferProgram->use();
 			glBindVertexArray(rectVAO);
 			glDisable(GL_DEPTH_TEST); // prevents framebuffer rectangle from being discarded
 			glBindTexture(GL_TEXTURE_2D, framebufferTexture);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
-			*/
+			
  			glfwSwapBuffers(window);
 			glfwPollEvents();
 		}
@@ -456,7 +453,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			break;
 
 		case GLFW_KEY_L:
-			_octtree.IsLodActive = !_octtree.IsLodActive;
+			Octtree::IsLodActive = !Octtree::IsLodActive;
 			break;
 		}
 	}

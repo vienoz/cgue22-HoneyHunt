@@ -17,9 +17,10 @@
 
 class Octtree
 {
+
 protected:
-    float _LOD_distance_1 = 20.0f;
-    float _LOD_distance_2 = 60.0f;
+    float _LOD_distance_1 = 40.0f;
+    float _LOD_distance_2 = 80.0f;
 
     std::vector<OcttreeNode> _nodes;
     std::vector<Octtree> _subtrees;
@@ -31,7 +32,7 @@ protected:
 
 
 public:
-    bool IsLodActive;
+    static bool IsLodActive;
 
     Octtree(glm::vec3 origin, glm::vec3 maxDimension, int capacity);
     Octtree();

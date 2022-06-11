@@ -14,10 +14,12 @@
 #include "Material.h"
 #include "Texture.h"
 #include "GamePhysx.h"
+#include "LODModel.h"
 #include "Model.h"
 #include "Entity.h"
 #include <math.h> 
 #include "Asset.h"
+#include "Octtree.h"
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
 #include "TextHandler.h"
@@ -34,9 +36,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void setPerFrameUniforms(ShaderNew* shader, Camera& camera, DirectionalLight& dirL);
+float getPlayerDistance(glm::vec3 position);
+std::shared_ptr<PhysxStaticEntity> getLODModel(std::vector<std::shared_ptr<PhysxStaticEntity> >, float cameraDistance);
 glm::vec3 updateMovement();
-Camera camera;
-
 
 /* --------------------------------------------- */
 // Global variables
@@ -49,10 +51,13 @@ static bool _strafing = false;
 static float _zoom = 15.0f;
 bool keys[512];
 
+Camera camera;
+Octtree _octtree;
 std::shared_ptr<PhysxDynamicEntity> playerEntity;
 std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
 std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
 
+std::shared_ptr<PhysxStaticEntity> _fallbackEntity;
 
 /* --------------------------------------------- */
 // Main
@@ -197,42 +202,54 @@ int main(int argc, char** argv)
 
 
 		auto woodShader = std::make_shared<ShaderNew>("assets/wood.vert.glsl", "assets/wood.frag.glsl");
-		auto woodMaterial = std::make_shared<Material>(woodShader, glm::vec3(0), 1.0f);
+		//auto woodMaterial = std::make_shared<Material>(woodShader, glm::vec3(0), 1.0f);
 
 		AssetManager::getInstance()->defaultMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"));
 
-		
 		std::vector<physx::PxGeometry> geoms;
+		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/sphere.obj", textureShader);
+		_fallbackEntity = std::make_shared<PhysxStaticEntity>(physx, fallbackModel, geoms, false);
 
-		std::shared_ptr<Model> tree = std::make_shared<Model>("assets/Lowpoly_tree_sample.obj", woodShader);
-		//std::shared_ptr<Model> teapot = std::make_shared<Model>("assets/dragön.fbx", textureShader);
-		std::shared_ptr<Model> plant = std::make_shared<Model>("assets/potted_plant_obj.obj", textureShader);
+
+		//player
 		std::shared_ptr<Model> player = std::make_shared<Model>("assets/biene.obj", textureShader);
-		//std::shared_ptr<Model> player2 = std::make_shared<Model>("assets/sphere.obj", playerShader);
-
-		std::shared_ptr<PhysxStaticEntity> treeEntity = std::make_shared<PhysxStaticEntity>(physx, tree, geoms, false);
-		//std::shared_ptr<PhysxDynamicEntity> teapotEntity = std::make_shared<PhysxDynamicEntity>(physx, teapot, geoms, false);
-		std::shared_ptr<PhysxStaticEntity> plantEntity = std::make_shared<PhysxStaticEntity>(physx, plant, geoms, false);
-
-
 		playerEntity = std::make_shared<PhysxDynamicEntity>(physx, player, geoms, false);
-		
-
-
-		treeEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(-5, 2, 0)));
 		playerEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(15, 10, 0)));
-		//teapotEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(5, 0, 0)));
-		plantEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)));
 
 
-		collisionStatics.push_back(treeEntity);
-		collisionStatics.push_back(plantEntity);
+		// ----------------------------init lod models----------------------------
+		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(100.0f, 100.0f, 100.0f), 8);		
+
+		//init trees
+		std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj"};
+		LODModel treeLODs = InitLodModel(treeModelPaths, textureShader, glm::mat4(1), glm::vec3(-5, 2, 0), geoms, physx);
+
+		//init plants
+		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj" };
+		LODModel plantLODs = InitLodModel(treeModelPaths, textureShader, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx);
+
+		/*     
+		//init code pre cleanup
+		std::shared_ptr<Model> plant_01 = std::make_shared<Model>("assets/potted_plant_obj.obj", textureShader);
+		std::shared_ptr<Model> plant_02 = std::make_shared<Model>("assets/potted_plant_obj_02.obj", textureShader);
+		std::shared_ptr<PhysxStaticEntity> plantEntity_01 = std::make_shared<PhysxStaticEntity>(physx, plant_01, geoms, false);
+		std::shared_ptr<PhysxStaticEntity> plantEntity_02 = std::make_shared<PhysxStaticEntity>(physx, plant_02, geoms, false);
+		plantEntity_01->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)));
+		plantEntity_02->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)));
+		collisionStatics.push_back(plantEntity_01);
+		collisionStatics.push_back(plantEntity_02);
+		LODModel plantLODs(plantEntity_01);
+		plantLODs.addModel(plantEntity_02);
+		*/
+
+		_octtree.insert(OcttreeNode(treeLODs));
+		_octtree.insert(OcttreeNode(plantLODs));
+		
+		_octtree.print();
 
 
-		// Initialize camera
+		// ----------------------------init scene----------------------------
 		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
-
-		// Initialize lights
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 
 		// Render loop
@@ -240,12 +257,7 @@ int main(int argc, char** argv)
 		float dt = 0.0f;
 		float t_sum = 0.0f;
 		double mouse_x, mouse_y;
-
-
 		glm::mat4 modelMatrix4phys;
-
-		
-
 		while (!glfwWindowShouldClose(window)) {
 
 			// Compute frame time
@@ -264,17 +276,20 @@ int main(int argc, char** argv)
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement());
-
 			setPerFrameUniforms(textureShader.get(), camera, dirL);
+
+			// draw
+			playerEntity->draw(camera);
+
+			//maybe it is magic now TODO
+			_octtree.setLodIDs(playerEntity->getPosition());
+			_octtree.draw(camera);
+
+			//plantEntity->draw(camera);
 
 			text.drawText("doing text", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 
-
-			//teapotEntity->draw(camera);
-			playerEntity->draw(camera);
-			treeEntity->draw(camera);
-			plantEntity->draw(camera);
-
+			//collision handling
 			if (physx.callback.collisionObj != NULL) {
 				int n = 0;
 				for (auto const& value : collisionStatics) {
@@ -314,6 +329,10 @@ int main(int argc, char** argv)
 	return EXIT_SUCCESS;
 }
 
+float getPlayerDistance(glm::vec3 position){
+	float distance = glm::distance(position, playerEntity->getPosition());
+	return distance;
+}
 
 void setPerFrameUniforms(ShaderNew* shader, Camera& camera, DirectionalLight& dirL)
 {
@@ -323,6 +342,27 @@ void setPerFrameUniforms(ShaderNew* shader, Camera& camera, DirectionalLight& di
 	shader->setUniform(3, camera.getPosition());
 	shader->setUniform(4, dirL.color);
 	shader->setUniform(5, dirL.direction);
+}
+
+
+std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<ShaderNew> shader, 
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx)
+{
+	std::shared_ptr<Model> temp = std::make_shared<Model>(modelPath, shader);
+	std::shared_ptr<PhysxStaticEntity> entity = std::make_shared<PhysxStaticEntity>(physx, temp, geoms, false);
+	entity->setGlobalPose(glm::translate(rotation, position));
+	collisionStatics.push_back(entity);
+	return entity;
+}
+
+LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<ShaderNew> shader,
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx)
+{
+	LODModel models;
+	for (auto const& path : modelPaths)
+		models.addModel(InitStaticEntity(path, shader, rotation, position, geoms, physx));
+
+	return models;
 }
 
 
@@ -381,6 +421,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			_culling = !_culling;
 			if (_culling) glEnable(GL_CULL_FACE);
 			else glDisable(GL_CULL_FACE);
+			break;
+
+		case GLFW_KEY_L:
+			_octtree.IsLodActive = !_octtree.IsLodActive;
 			break;
 		}
 	}
@@ -498,66 +542,6 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 
 	return stringStream.str();
 }
-
-
-//physx::PxDefaultAllocator		gAllocator;
-//physx::PxDefaultErrorCallback	gErrorCallback;
-
-//physx::PxFoundation* gFoundation = nullptr;
-
-//physx::PxDefaultCpuDispatcher* gDispatcher = nullptr;
-
-//physx::PxPvd* gPvd = nullptr;
-
-
-//void initPhysics()
-//{
-//	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
-//if (!gFoundation) throw ("failed to create PxCreateFoundation");
-
-	// for visual debugger?
-//	gPvd = PxCreatePvd(*gFoundation);
-//	physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10); //what on earth...
-//	gPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
-
-	//create physics
-//	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(), true, gPvd);
-//	if (!gPhysics) throw ("failed to create PxCreatePhysics");
-
-	//setup scene
-//	physx::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
-	//sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
-//	sceneDesc.gravity = physx::PxVec3(0.0f, .0f, 0.0f);
-//	gDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
-//	sceneDesc.cpuDispatcher = gDispatcher;
-//	sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
-//	gScene = gPhysics->createScene(sceneDesc);
-
-
-	//scene client, aslo for debugger
-//	physx::PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
-//	if (pvdClient)
-//	{
-//		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
-//		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
-//		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
-//	}
-
-	//create body 
-//	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
-
-//	physx::PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, physx::PxPlane(0, 1, 0, 0), *gMaterial);
-//	gScene->addActor(*groundPlane);
-
-
-
-	//physx::PxRigidDynamic* aBoxActor = gPhysics->createRigidDynamic(physx::PxTransform(physx::PxVec3(5.0, 15.0, 5.0)));
-	//physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*aBoxActor,physx::PxBoxGeometry(2 / 2, 2 / 2, 2 / 2), *gMaterial);
-	///gScene->addActor(*aBoxActor);
-//	std::cout << "doing physx" << std::endl;
-	//run sim
-//}
-
 
 //TODO: add slight pitch when moving forward, by adding quaternions?
 glm::vec3 updateMovement() {

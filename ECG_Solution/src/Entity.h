@@ -25,6 +25,7 @@ public:
     physx::PxRigidDynamic* _actor;
     virtual void draw(Camera& camera);
     virtual void setGlobalPose(glm::mat4 transform);
+    virtual glm::vec3 getPosition();
 
     physx::PxRigidDynamic* getPhysxActor()
     {
@@ -39,6 +40,7 @@ public:
     physx::PxRigidStatic* _actor;
     virtual void draw(Camera& camera);
     virtual void setGlobalPose(glm::mat4 transform);
+    virtual glm::vec3 getPosition();
 
     physx::PxRigidStatic* getPhysxActor()
     {
@@ -47,5 +49,3 @@ public:
 
     PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isDynamic);
 };
-
-// ==============================================;

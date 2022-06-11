@@ -100,6 +100,13 @@ PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> 
     physx.getScene()->addActor(*_actor);
 }
 
+glm::vec3 PhysxDynamicEntity::getPosition()
+{
+    auto pos = _actor->getGlobalPose().p;
+    return glm::vec3(pos.x, pos.y, pos.z);
+}
+
+
 //first shape at should always be collision relevant one, which is the sphere in this instance for whatever reason
 PhysxStaticEntity::PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isKinematic)
     : PhysxEntity(physx, model)
@@ -137,4 +144,10 @@ void PhysxStaticEntity::setGlobalPose(glm::mat4 transform)
     glmMat4ToPhysxMat4(transform, mat);
 
     _actor->setGlobalPose(physx::PxTransform(mat));
+}
+
+glm::vec3 PhysxStaticEntity::getPosition()
+{
+    auto pos = _actor->getGlobalPose().p;
+    return glm::vec3(pos.x, pos.y, pos.z);
 }

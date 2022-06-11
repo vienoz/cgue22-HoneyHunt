@@ -23,7 +23,7 @@ class PhysxDynamicEntity : public PhysxEntity
 {
 public:
     physx::PxRigidDynamic* _actor;
-    virtual void draw(Camera& camera);
+    virtual void draw(Camera& camera, DirectionalLight& dirL);
     virtual void setGlobalPose(glm::mat4 transform);
     virtual glm::vec3 getPosition();
 
@@ -38,7 +38,7 @@ public:
 class PhysxStaticEntity : public PhysxEntity {
 public: 
     physx::PxRigidStatic* _actor;
-    virtual void draw(Camera& camera);
+    virtual void draw(Camera& camera, DirectionalLight& dirL);
     virtual void setGlobalPose(glm::mat4 transform);
     virtual glm::vec3 getPosition();
 

@@ -35,16 +35,15 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void setPerFrameUniforms(ShaderNew* shader, Camera& camera, DirectionalLight& dirL);
 float getPlayerDistance(glm::vec3 position);
 std::shared_ptr<PhysxStaticEntity> getLODModel(std::vector<std::shared_ptr<PhysxStaticEntity> >, float cameraDistance);
 glm::vec3 updateMovement();
 
-LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<ShaderNew> shader,
+std::shared_ptr<LODModel> InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
-std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<ShaderNew> shader,
+std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
-std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<ShaderNew> shader,
+std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
 
 /* --------------------------------------------- */
@@ -58,17 +57,23 @@ static bool _strafing = false;
 static float _zoom = 15.0f;
 bool keys[512];
 
+float rectangleVertices[] = {
+	1.0f, -1.0f, 1.0f, 0.0f,
+   -1.0f, -1.0f, 0.0f, 0.0f,
+   -1.0f,  1.0f, 0.0f, 1.0f,
+   
+    1.0f,  1.0f, 1.0f, 1.0f,
+    1.0f, -1.0f, 1.0f, 0.0f,
+   -1.0f,  1.0f, 0.0f, 1.0f,
+};
+
 Camera camera;
 Octtree _octtree;
 std::shared_ptr<PhysxDynamicEntity> playerEntity;
 std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
 std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
-
 std::shared_ptr<PhysxStaticEntity> _fallbackEntity;
 
-/* --------------------------------------------- */
-// Main
-/* --------------------------------------------- */
 
 #if 0
 int protectedMain(int argc, char** argv);
@@ -95,12 +100,6 @@ int main(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-	/* --------------------------------------------- */
-	// Load settings.ini
-	/* --------------------------------------------- */
-
-	//std::cout<<std::filesystem::current_path()<<std::endl;
-
 	INIReader reader("assets/settings.ini");
 
 	int window_width = reader.GetInteger("window", "width", 800);
@@ -113,12 +112,8 @@ int main(int argc, char** argv)
 	float farZ = float(reader.GetReal("camera", "far", 100.0f));
 
 
-	/* --------------------------------------------- */
 	// Create context
-	/* --------------------------------------------- */
-
 	AssetManager::init();
-
 	glfwSetErrorCallback([](int error, const char* description) { std::cout << "GLFW error " << error << ": " << description << std::endl; });
 
 	if (!glfwInit()) {
@@ -169,11 +164,6 @@ int main(int argc, char** argv)
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	}
 
-
-	/* --------------------------------------------- */
-	// Init framework
-	/* --------------------------------------------- */
-
 	if (!initFramework()) {
 		EXIT_WITH_ERROR("Failed to init framework");
 	}
@@ -185,8 +175,8 @@ int main(int argc, char** argv)
 
 	// set GL defaults
 	glClearColor(1, 1, 1, 1);
-	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+
 	//Freetype
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -202,41 +192,84 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	{
 		// Load shader(s)
-		auto textureShader = std::make_shared<ShaderNew>("assets/texture_cel.vert.glsl", "assets/texture_cel.frag.glsl");
-		text.setUpShader("assets/textShader.vert.glsl", "assets/textShader.frag.glsl");
-		std::shared_ptr<TextureMaterial> playerMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"));
-		auto woodShader = std::make_shared<ShaderNew>("assets/wood.vert.glsl", "assets/wood.frag.glsl");
-		//auto woodMaterial = std::make_shared<Material>(woodShader, glm::vec3(0), 1.0f);
-		AssetManager::getInstance()->defaultMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"));
+		auto celShader = AssetManager::getInstance()->getShader("assets/texture_cel");
+		auto woodShader = AssetManager::getInstance()->getShader("assets/wood");
+		auto frameBufferProgram = AssetManager::getInstance()->getShader("assets/framebuffer");
+		AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
+
+		auto defaultMaterial = AssetManager::getInstance()->defaultMaterial;
+		std::shared_ptr<BaseMaterial> playerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
+		std::shared_ptr<BaseMaterial> woodMaterial = std::make_shared<BaseMaterial>(woodShader);
+		 
 
 		std::vector<physx::PxGeometry> geoms;
-		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/sphere.obj", textureShader);
+		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/sphere.obj", defaultMaterial);
 		_fallbackEntity = std::make_shared<PhysxStaticEntity>(physx, fallbackModel, geoms, false);
 
 		// ----------------------------init static models--------------------
-		playerEntity = InitDynamicEntity("assets/biene.obj", textureShader, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx);
+		playerEntity = InitDynamicEntity("assets/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx);
 
 		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(100.0f, 100.0f, 100.0f), 8);		
 
 		std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj", "assets/sphere.obj" };
-		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, woodShader, glm::mat4(1), glm::vec3(-5, 2, 0), geoms, physx)));
+		_octtree.insert(new OcttreeNode(InitLodModel(treeModelPaths, woodMaterial, glm::mat4(1), glm::vec3(-5, 2, 0), geoms, physx)));
 
 		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj", "assets/sphere.obj" };
-		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, textureShader, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx)));
+		_octtree.insert(new OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx)));
 
 		_octtree.print();
 
+		
 		// ----------------------------init scene----------------------------
 		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 
-		// Render loop
+
+		//--------------------frame buffers (post processing)------------------------
+		
+		unsigned int rectVAO, rectVBO;
+		glGenVertexArrays(1, &rectVAO);
+		glGenBuffers(1, &rectVBO);
+		glBindVertexArray(rectVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, rectVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), &rectangleVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2 ,GL_FLOAT, GL_FALSE, 4* sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2 ,GL_FLOAT, GL_FALSE, 4* sizeof(float), (void*)(2 * sizeof(float)));
+		
+
+		unsigned int FBO;
+		glGenFramebuffers(1, &FBO);
+		glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+		
+		unsigned int frameBufferTexture;
+		glGenTextures(1, &frameBufferTexture);
+		glBindTexture(GL_TEXTURE_2D, frameBufferTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, frameBufferTexture, 0);
+
+		unsigned int RBO;
+		glGenFramebuffers(1, &RBO);
+		glBindFramebuffer(GL_RENDERBUFFER, RBO);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width, window_height);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+
+		auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+			std::cout << "Framebuffer error: " << fboStatus << std::endl;
+
+			
+		//-----------------------------------Render loop------------------------------------
 		float t = float(glfwGetTime());
 		float dt = 0.0f;
 		float t_sum = 0.0f;
 		double mouse_x, mouse_y;
-		glm::mat4 modelMatrix4phys;
 		while (!glfwWindowShouldClose(window)) {
 
 			// Compute frame time
@@ -249,20 +282,23 @@ int main(int argc, char** argv)
 			physx.getScene()->simulate(dt); //elapsed time
 			physx.getScene()->fetchResults(true);
 
+
+			//render buffer setup 
+			//glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glfwPollEvents();
+			glEnable(GL_DEPTH_TEST);
+			
 
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement());
-			setPerFrameUniforms(textureShader.get(), camera, dirL);
 
 			// draw
-			playerEntity->draw(camera);
+			playerEntity->draw(camera, dirL);
 
 			//maybe it is magic now TODO
 			_octtree.setLodIDs(playerEntity->getPosition());
-			_octtree.draw(camera);
+			_octtree.draw(camera, dirL);
 
 			//plantEntity->draw(camera);
 
@@ -285,70 +321,59 @@ int main(int argc, char** argv)
 			physx.callback.collisionObj = NULL;
 			physx.callback.collisionShapes = NULL;
 
+			
+			//render buffered texture
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glBindVertexArray(rectVAO);
+			glDisable(GL_DEPTH_TEST);
+			glBindTexture(GL_TEXTURE_2D, frameBufferTexture);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			
  			glfwSwapBuffers(window);
+			glfwPollEvents();
 		}
 	}
 
 
-	/* --------------------------------------------- */
-	// Destroy framework
-	/* --------------------------------------------- */
-
+	// Clean-up
 	destroyFramework();
-
-
-	/* --------------------------------------------- */
-	// Destroy context and exit
-	/* --------------------------------------------- */
-
 	glfwTerminate();
-
 	AssetManager::destroy();
 
 	return EXIT_SUCCESS;
 }
+
 
 float getPlayerDistance(glm::vec3 position){
 	float distance = glm::distance(position, playerEntity->getPosition());
 	return distance;
 }
 
-void setPerFrameUniforms(ShaderNew* shader, Camera& camera, DirectionalLight& dirL)
-{
-	shader->use();
-	shader->setUniform(1, camera.getViewMatrix());
-	shader->setUniform(2, camera.getProjMatrix());
-	shader->setUniform(3, camera.getPosition());
-	shader->setUniform(4, dirL.color);
-	shader->setUniform(5, dirL.direction);
-}
-
-
-std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<ShaderNew> shader, 
+std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material, 
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx)
 {
-	std::shared_ptr<Model> temp = std::make_shared<Model>(modelPath, shader);
+	std::shared_ptr<Model> temp = std::make_shared<Model>(modelPath, material);
 	std::shared_ptr<PhysxStaticEntity> entity = std::make_shared<PhysxStaticEntity>(physx, temp, geoms, false);
 	entity->setGlobalPose(glm::translate(rotation, position));
 	collisionStatics.push_back(entity);
 	return entity;
 }
 
-std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<ShaderNew> shader,
+std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx)
 {
-	std::shared_ptr<Model> temp = std::make_shared<Model>(modelPath, shader);
+	std::shared_ptr<Model> temp = std::make_shared<Model>(modelPath, material);
 	std::shared_ptr<PhysxDynamicEntity> entity = std::make_shared<PhysxDynamicEntity>(physx, temp, geoms, false);
 	entity->setGlobalPose(glm::translate(rotation, position));
 	return entity;
 }
 
-LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<ShaderNew> shader,
+std::shared_ptr<LODModel> InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx)
 {
-	LODModel models;
+	auto models = std::make_shared<LODModel>();
 	for (auto const& path : modelPaths)
-		models.addModel(InitStaticEntity(path, shader, rotation, position, geoms, physx));
+		models->addModel(InitStaticEntity(path, material, rotation, position, geoms, physx));
 
 	return models;
 }

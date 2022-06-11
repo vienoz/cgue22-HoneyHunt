@@ -14,10 +14,13 @@ layout(location = 0) uniform mat4 modelMatrix;
 layout(location = 1) uniform mat4 viewMatrix;
 layout(location = 2) uniform mat4 projMatrix;
 
+layout(location = 3) uniform vec3 cameraWorld;
+
 void main() {
 	vert.normal_world = mat3(transpose(inverse(modelMatrix))) * normal;
 	vert.uv = uv;
-	vec4 position_world_ = modelMatrix * vec4(position, 1);
+	vec4 position_world_ = modelMatrix * vec4(position, 1.0f);
 	vert.position_world = position_world_.xyz;
+
 	gl_Position = projMatrix * viewMatrix * position_world_;
 }

@@ -18,14 +18,14 @@ class OcttreeNode
 {
 protected:
     glm::vec3 _position;
-    LODModel _lodModels;
+    std::shared_ptr<LODModel> _lodModels;
 
 public:
-    OcttreeNode(LODModel lods);
+    OcttreeNode(std::shared_ptr<LODModel> lods);
     virtual ~OcttreeNode();
 
     glm::vec3 getPosition();
     void setLodID(int id);
-    LODModel getLodModels();
+    std::shared_ptr<LODModel> getLodModels();
     void print();
 };

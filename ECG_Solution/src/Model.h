@@ -22,30 +22,24 @@ class Model
 protected:
     std::vector<Mesh*> _meshes;
     std::string _directory;
+    std::shared_ptr<BaseMaterial> _material;
 
     // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
-    void loadModel(const std::string& path, std::shared_ptr<ShaderNew> shader);
+    void loadModel(const std::string& path);
 
     // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
-    void processNode(aiNode* node, const aiScene* scene, std::shared_ptr<ShaderNew> shader);
+    void processNode(aiNode* node, const aiScene* scene);
 
-    Mesh* processMesh(aiMesh* mesh, const aiScene* scene, std::shared_ptr<ShaderNew> shader);
+    Mesh* processMesh(aiMesh* mesh, const aiScene* scene);
 
     std::vector<std::shared_ptr<Texture> > loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 
 public:
     // constructor, expects a filepath to a 3D model.
-    Model(const std::string& path, std::shared_ptr<ShaderNew> shader);
+    Model(const std::string& path, std::shared_ptr<BaseMaterial> material);
     ~Model();
 
-    void addMaterial(std::shared_ptr<Material> material);
+    std::shared_ptr<BaseMaterial> getMaterial();
 
-    void draw(glm::mat4 modelMatrix, Camera& camera);
-
-    // draws the model, and thus all its meshes
-    /*void Draw()
-    {
-        for (unsigned int i = 0; i < _meshes.size(); i++)
-            _meshes[i].draw();
-    }*/
+    void draw(glm::mat4 modelMatrix, Camera& camera, DirectionalLight& dirL);
 };

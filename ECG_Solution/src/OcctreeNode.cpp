@@ -1,9 +1,9 @@
 #include "OcttreeNode.h"
 
-OcttreeNode::OcttreeNode(LODModel lodModels)
+OcttreeNode::OcttreeNode(std::shared_ptr<LODModel> lodModels)
     : _lodModels(lodModels)
 {
-    _position = lodModels.getActiveModel()->getPosition();
+    _position = lodModels->getActiveModel()->getPosition();
 }
 
 OcttreeNode::~OcttreeNode()
@@ -15,13 +15,13 @@ glm::vec3 OcttreeNode::getPosition() {
 }
 
 void OcttreeNode::setLodID(int id) {
-    _lodModels.setLodID(id);
+    _lodModels->setLodID(id);
 }
 
 void OcttreeNode::print() {
     std::cout << "Node Position x:" << _position.x << ", y:" << _position.y << ", z:" << _position.z << std::endl;
 }
 
-LODModel OcttreeNode::getLodModels() {
+std::shared_ptr<LODModel> OcttreeNode::getLodModels() {
     return _lodModels;
 }

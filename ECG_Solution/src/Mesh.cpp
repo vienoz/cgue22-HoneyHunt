@@ -1,7 +1,7 @@
 #include "Mesh.h"
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, std::vector<std::shared_ptr<Material> > materials)
-    : _vertices(vertices), _indices(indices), _materials(materials)
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices)
+    : _vertices(vertices), _indices(indices)
 {
     // Create VAO and check for validity
     _vaoID = 0;
@@ -50,25 +50,9 @@ Mesh::~Mesh()
     glDeleteVertexArrays(1, &_vaoID);
 }
 
-void Mesh::addMaterial(std::shared_ptr<Material> material)
-{
-    _materials.push_back(material);
-}
-
 void Mesh::draw(glm::mat4 modelMatrix, Camera& camera)
 {
     glBindVertexArray(_vaoID);
 
-    for (size_t i = 0; i < _materials.size(); ++i)
-    {
-        auto shader = _materials[i]->getShader();
-
-        shader->use();
-        shader->setUniform(0, modelMatrix);
-        shader->setUniform(1, camera.getViewMatrix());
-        shader->setUniform(2, camera.getProjMatrix());
-        _materials[i]->setUniforms();
-
-        glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
-    }
+    glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
 }

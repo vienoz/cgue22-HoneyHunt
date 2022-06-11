@@ -16,10 +16,15 @@ Octtree::Octtree() {
 
 Octtree::~Octtree()
 {
+    for (size_t i = 0; i < _subtrees.size(); ++i)
+        delete _subtrees[i];
+    
+    for (size_t i = 0; i < _nodes.size(); ++i)
+        delete _nodes[i];
 }
 
-void Octtree::insert(OcttreeNode node) {
-    if (!contains(node.getPosition()))
+void Octtree::insert(OcttreeNode* node) {
+    if (!contains(node->getPosition()))
         return;
 
     if (_nodes.size() < _capacity)
@@ -28,14 +33,14 @@ void Octtree::insert(OcttreeNode node) {
         if (!_hasDivided)
             subdivide();
 
-        _subtrees[0].insert(node);
-        _subtrees[1].insert(node);
-        _subtrees[2].insert(node);
-        _subtrees[3].insert(node);
-        _subtrees[4].insert(node);
-        _subtrees[5].insert(node);
-        _subtrees[6].insert(node);
-        _subtrees[7].insert(node);
+        _subtrees[0]->insert(node);
+        _subtrees[1]->insert(node);
+        _subtrees[2]->insert(node);
+        _subtrees[3]->insert(node);
+        _subtrees[4]->insert(node);
+        _subtrees[5]->insert(node);
+        _subtrees[6]->insert(node);
+        _subtrees[7]->insert(node);
     }
 }
 
@@ -48,21 +53,21 @@ void Octtree::subdivide() {
 
     // cube dimension calculations
     newOrigin = glm::vec3(_origin.x + offsetX, _origin.y - offsetY, _origin.z + offsetZ);
-    auto lowNorthEast = Octtree(newOrigin, newDimension, _capacity);
+    auto lowNorthEast = new Octtree(newOrigin, newDimension, _capacity);
     newOrigin = glm::vec3(_origin.x - offsetX, _origin.y - offsetY, _origin.z + offsetZ);
-    auto lowNorthWest = Octtree(newOrigin, newDimension, _capacity);
+    auto lowNorthWest = new Octtree(newOrigin, newDimension, _capacity);
     newOrigin = glm::vec3(_origin.x + offsetX, _origin.y - offsetY, _origin.z - offsetZ);
-    auto lowSouthEast = Octtree(newOrigin, newDimension, _capacity);
+    auto lowSouthEast = new Octtree(newOrigin, newDimension, _capacity);
     newOrigin = glm::vec3(_origin.x - offsetX, _origin.y - offsetY, _origin.z - offsetZ);
-    auto lowSouthWest = Octtree(newOrigin, newDimension, _capacity);
+    auto lowSouthWest = new Octtree(newOrigin, newDimension, _capacity);
     newOrigin = glm::vec3(_origin.x + offsetX, _origin.y + offsetY, _origin.z + offsetZ);
-    auto upNorthEast = Octtree(newOrigin, newDimension, _capacity);
+    auto upNorthEast = new Octtree(newOrigin, newDimension, _capacity);
     newOrigin = glm::vec3(_origin.x - offsetX, _origin.y + offsetY, _origin.z + offsetZ);
-    auto upNorthWest = Octtree(newOrigin, newDimension, _capacity);
+    auto upNorthWest = new Octtree(newOrigin, newDimension, _capacity);
     newOrigin = glm::vec3(_origin.x + offsetX, _origin.y + offsetY, _origin.z - offsetZ);
-    auto upSouthEast = Octtree(newOrigin, newDimension, _capacity);
+    auto upSouthEast = new Octtree(newOrigin, newDimension, _capacity);
     newOrigin = glm::vec3(_origin.x - offsetX, _origin.y + offsetY, _origin.z - offsetZ);
-    auto upSouthWest = Octtree(newOrigin, newDimension, _capacity);
+    auto upSouthWest = new Octtree(newOrigin, newDimension, _capacity);
 
     // set new trees as children 
     _subtrees[0] = lowNorthEast;
@@ -87,23 +92,23 @@ bool Octtree::contains(glm::vec3 point) {
 void Octtree::print() {
     if (!_hasDivided)
         for (auto& node : _nodes)
-            node.print();
+            node->print();
     else
         for (auto& subtree : _subtrees)
-            subtree.print();
+            subtree->print();
 }
 
-void Octtree::draw(Camera camera) {
+void Octtree::draw(Camera& camera, DirectionalLight& dirL) {
     if (!_hasDivided)
         for (auto& node : _nodes) {
             if(IsLodActive)
-                node.getLodModels().drawActive(camera);
+                node->getLodModels()->drawActive(camera, dirL);
             else
-                node.getLodModels().draw(camera, 0); //0 is default lod
+                node->getLodModels()->draw(camera, dirL, 0); //0 is default lod
         }
     else
         for (auto& subtree : _subtrees)
-            subtree.draw(camera);
+            subtree->draw(camera, dirL);
 }
 
 void Octtree::setLodIDs(glm::vec3 playerPosition) {
@@ -117,9 +122,9 @@ void Octtree::setLodIDs(glm::vec3 playerPosition) {
             id = 2;
 
         for (auto& node : _nodes)
-            node.setLodID(id);
+            node->setLodID(id);
     }   
     else
         for (auto& subtree : _subtrees)
-            subtree.setLodIDs(playerPosition);
+            subtree->setLodIDs(playerPosition);
 }

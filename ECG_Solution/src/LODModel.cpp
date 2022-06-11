@@ -27,15 +27,15 @@ std::shared_ptr<PhysxStaticEntity> LODModel::getModel(int id) {
 }
 
 std::shared_ptr<PhysxStaticEntity> LODModel::getActiveModel() {
-	return _models[_id];
+	return getModel(_id);
 }
 
-void LODModel::drawActive(Camera camera) {
-	getActiveModel()->draw(camera);
+void LODModel::drawActive(Camera& camera, DirectionalLight& dirL) {
+	getActiveModel()->draw(camera, dirL);
 }
 
-void LODModel::draw(Camera camera, int id) {
-	getModel(id)->draw(camera);
+void LODModel::draw(Camera& camera, DirectionalLight& dirL, uint32_t id) {
+	getModel(id)->draw(camera, dirL);
 }
 
 void LODModel::setLodID(int id) {

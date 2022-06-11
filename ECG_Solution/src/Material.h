@@ -9,39 +9,29 @@
 #include <glm/glm.hpp>
 #include "ShaderNew.h"
 #include "Texture.h"
-
+#include "Camera.h"
+#include "Light.h"
 
 
 /*!
  * Base material
  */
-class Material
+class BaseMaterial
 {
 protected:
 	/*!
 	 * The shader used for rendering this material
 	 */
 	std::shared_ptr<ShaderNew> _shader;
-	/*!
-	 * The material's coefficients (x = ambient, y = diffuse, z = specular)
-	 */
-	glm::vec3 _materialCoefficients;
-
-	/*!
-	 * Alpha value, i.e. the shininess constant
-	 */
-	float _alpha;
 
 public:
 	/*!
 	 * Base material constructor
 	 * @param shader: The shader used for rendering this material
-	 * @param materialCoefficients: The material's coefficients (x = ambient, y = diffuse, z = specular)
-	 * @param alpha: Alpha value, i.e. the shininess constant
 	 */
-	Material(std::shared_ptr<ShaderNew> shader, glm::vec3 materialCoefficients, float alpha);
+	BaseMaterial(std::shared_ptr<ShaderNew> shader);
 
-	virtual ~Material();
+	virtual ~BaseMaterial();
 
 	/*!
 	 * @return The shader associated with this material
@@ -51,14 +41,14 @@ public:
 	/*!
 	 * Sets this material's parameters as uniforms in the shader
 	 */
-	virtual void setUniforms();
+	virtual void setUniforms(glm::mat4 modelMatrix, Camera& camera, DirectionalLight& dirL);
 };
 
 
 /*!
  * Texture material
  */
-class TextureMaterial : public Material
+class TextureMaterial : public BaseMaterial
 {
 protected:
 	/*!
@@ -70,16 +60,41 @@ public:
 	/*!
 	 * Texture material constructor
 	 * @param shader: The shader used for rendering this material
-	 * @param materialCoefficients: The material's coefficients (x = ambient, y = diffuse, z = specular)
-	 * @param alpha: Alpha value, i.e. the shininess constant
 	 * @param diffuseTexture: The diffuse texture of this material
 	 */
-	TextureMaterial(std::shared_ptr<ShaderNew> shader, glm::vec3 materialCoefficients, float alpha, std::shared_ptr<Texture> diffuseTexture);
+	TextureMaterial(std::shared_ptr<ShaderNew> shader, std::shared_ptr<Texture> diffuseTexture);
 
 	virtual ~TextureMaterial();
 
 	/*!
 	 * Set's this material's parameters as uniforms in the shader
 	 */
-	virtual void setUniforms();
+	virtual void setUniforms(glm::mat4 modelMatrix, Camera& camera, DirectionalLight& dirL);
+};
+
+/*
+ * Cel shaded material
+ */
+class CelShadedMaterial : public TextureMaterial
+{
+protected:
+	/*!
+	 * The material's coefficients (x = ambient, y = diffuse, z = specular)
+	 */
+	glm::vec3 _materialCoefficients;
+
+	/*!
+	 * Alpha value, i.e. the shininess constant
+	 */
+	float _alpha;
+
+public:
+	CelShadedMaterial(std::shared_ptr<ShaderNew> shader, std::shared_ptr<Texture> diffuseTexture, glm::vec3 materialCoefficients, float alpha);
+
+	virtual ~CelShadedMaterial();
+
+	/*!
+	 * Set's this material's parameters as uniforms in the shader
+	 */
+	virtual void setUniforms(glm::mat4 modelMatrix, Camera& camera, DirectionalLight& dirL);
 };

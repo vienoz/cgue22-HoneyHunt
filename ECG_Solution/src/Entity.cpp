@@ -69,12 +69,12 @@ void PhysxDynamicEntity::setGlobalPose(glm::mat4 transform)
     _actor->setGlobalPose(physx::PxTransform(mat));
 }
 
-void PhysxDynamicEntity::draw(Camera& camera)
+void PhysxDynamicEntity::draw(Camera& camera, DirectionalLight& dirL)
 {
     glm::mat4 modelMatrix;
     physXMat4ToGlmMat4(_actor->getGlobalPose(), modelMatrix);
 
-    _model->draw(modelMatrix, camera);
+    _model->draw(modelMatrix, camera, dirL);
 }
 
 PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isKinematic)
@@ -130,12 +130,12 @@ PhysxStaticEntity::PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> mo
     physx.getScene()->addActor(*_actor);
 }
 
-void PhysxStaticEntity::draw(Camera& camera)
+void PhysxStaticEntity::draw(Camera& camera, DirectionalLight& dirL)
 {
     glm::mat4 modelMatrix;
     physXMat4ToGlmMat4(_actor->getGlobalPose(), modelMatrix);
 
-    _model->draw(modelMatrix, camera);
+    _model->draw(modelMatrix, camera, dirL);
 }
 
 void PhysxStaticEntity::setGlobalPose(glm::mat4 transform)

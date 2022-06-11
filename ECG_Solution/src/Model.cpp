@@ -1,8 +1,11 @@
 #include "Model.h"
 
-Model::Model(const std::string& path, std::shared_ptr<ShaderNew> shader)
+#include "Light.h"
+
+Model::Model(const std::string& path, std::shared_ptr<BaseMaterial> material)
+    : _material(material)
 {
-    loadModel(path, shader);
+    loadModel(path);
 }
 
 Model::~Model()
@@ -11,29 +14,13 @@ Model::~Model()
         delete _meshes[i];
 }
 
-std::vector<std::shared_ptr<Texture> > Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
-{
-    std::vector<std::shared_ptr<Texture> > textures;
-
-    for (size_t i = 0; i < mat->GetTextureCount(type); ++i)
-    {
-        aiString str;
-        mat->GetTexture(type, i, &str);
-
-        textures.push_back(AssetManager::getInstance()->getTexture(_directory + std::string(str.C_Str())));
-    }
-
-    return textures;
-}
-
-void Model::loadModel(const std::string& path, std::shared_ptr<ShaderNew> shader)
+void Model::loadModel(const std::string& path)
 {
     // read file via ASSIMP
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
     // check for errors
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
-        //throw new std::exception(importer.GetErrorString());
     {
         std::cerr << importer.GetErrorString() << std::endl;
         exit(EXIT_FAILURE);
@@ -46,10 +33,10 @@ void Model::loadModel(const std::string& path, std::shared_ptr<ShaderNew> shader
     _directory = path.substr(0, path.find_last_of('/'));
 
     // process ASSIMP's root node recursively
-    processNode(scene->mRootNode, scene, shader);
+    processNode(scene->mRootNode, scene);
 }
 
-void Model::processNode(aiNode* node, const aiScene* scene, std::shared_ptr<ShaderNew> shader)
+void Model::processNode(aiNode* node, const aiScene* scene)
 {
     // process each mesh located at the current node
     for (size_t i = 0; i < node->mNumMeshes; i++)
@@ -57,21 +44,20 @@ void Model::processNode(aiNode* node, const aiScene* scene, std::shared_ptr<Shad
         // the node object only contains indices to index the actual objects in the scene. 
         // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        _meshes.push_back(processMesh(mesh, scene, shader));
+        _meshes.push_back(processMesh(mesh, scene));
     }
     // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
     for (size_t i = 0; i < node->mNumChildren; i++)
     {
-        processNode(node->mChildren[i], scene, shader);
+        processNode(node->mChildren[i], scene);
     }
 }
 
-Mesh* Model::processMesh(aiMesh* mesh, const aiScene* scene, std::shared_ptr<ShaderNew> shader)
+Mesh* Model::processMesh(aiMesh* mesh, const aiScene* scene)
 {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
     std::vector<std::shared_ptr<Texture> > textures;
-    std::shared_ptr<Material> ownMaterial;
 
     for (size_t i = 0; i < mesh->mNumVertices; i++)
     {
@@ -101,40 +87,19 @@ Mesh* Model::processMesh(aiMesh* mesh, const aiScene* scene, std::shared_ptr<Sha
             indices.push_back(face.mIndices[j]);
     }
 
-    if (mesh->mMaterialIndex >= 0)
-    {
-        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        std::vector<std::shared_ptr<Texture> > diffuseMaps = loadMaterialTextures(material, 
-                                            aiTextureType_DIFFUSE, "texture_diffuse");
-                                    
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        std::vector<std::shared_ptr<Texture> > specularMaps = loadMaterialTextures(material, 
-                                            aiTextureType_SPECULAR, "texture_specular");
-        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-
-        if (textures.size() > 0)
-            ownMaterial = std::make_shared<TextureMaterial>(shader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, textures[0]);
-        else
-            ownMaterial = std::make_shared<Material>(shader, glm::vec3(0), 1.0f);
-            //ownMaterial = AssetManager::getInstance()->defaultMaterial;    
-    }
-    else
-        ownMaterial = AssetManager::getInstance()->defaultMaterial;
-
-    std::vector<std::shared_ptr<Material> > vec;
-    vec.push_back(ownMaterial);
-
-    return new Mesh(vertices, indices, vec);
+    return new Mesh(vertices, indices);
 }
 
-void Model::addMaterial(std::shared_ptr<Material> material)
+std::shared_ptr<BaseMaterial> Model::getMaterial()
 {
-    for (size_t i = 0; i < _meshes.size(); ++i)
-        _meshes[i]->addMaterial(material);
+    return _material;
 }
 
-void Model::draw(glm::mat4 modelMatrix, Camera& camera)
+void Model::draw(glm::mat4 modelMatrix, Camera& camera, DirectionalLight& dirL)
 {
+    _material->getShader()->use();
+    _material->setUniforms(modelMatrix, camera, dirL);
+
     for (size_t i = 0; i < _meshes.size(); ++i)
         _meshes[i]->draw(modelMatrix, camera);
 }

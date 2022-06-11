@@ -83,7 +83,8 @@ void TextHandler::setUpShader(std::string vert, std::string frag) {
 
 void TextHandler::drawText(std::string text, float x, float y, float scale, glm::vec3 color) {
     // activate corresponding render state	
-    textShader.get()->use();
+    return;
+    textShader->use();
     textShader->setUniform(1 , projection);
     glUniform3f(glGetUniformLocation(textShader->_handle, "textColor"), color.x, color.y, color.z);
     glActiveTexture(GL_TEXTURE0);

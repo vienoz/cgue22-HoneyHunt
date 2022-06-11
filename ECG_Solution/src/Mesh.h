@@ -22,16 +22,13 @@ class Mesh
 protected:
     std::vector<Vertex> _vertices;
     std::vector<uint32_t> _indices;
-    std::vector<std::shared_ptr<Material> > _materials;
 
     GLuint _vaoID;
     GLuint _vboIDData, _vboIDIndices;
 
 public:
-    Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, std::vector<std::shared_ptr<Material> > materials);
+    Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices);
     ~Mesh();
-
-    void addMaterial(std::shared_ptr<Material> material);
 
     void draw(glm::mat4 modelMatrix, Camera& camera);
 };

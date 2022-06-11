@@ -40,6 +40,11 @@ float getPlayerDistance(glm::vec3 position);
 std::shared_ptr<PhysxStaticEntity> getLODModel(std::vector<std::shared_ptr<PhysxStaticEntity> >, float cameraDistance);
 glm::vec3 updateMovement();
 
+LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<ShaderNew> shader,
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
+std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<ShaderNew> shader,
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
+
 /* --------------------------------------------- */
 // Global variables
 /* --------------------------------------------- */
@@ -220,13 +225,11 @@ int main(int argc, char** argv)
 		// ----------------------------init LOD models----------------------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(100.0f, 100.0f, 100.0f), 8);		
 
-		//init trees
 		std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj"};
 		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, textureShader, glm::mat4(1), glm::vec3(-5, 2, 0), geoms, physx)));
 
-		//init plants
 		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj" };
-		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, textureShader, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx)));
+		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, textureShader, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx)));
 
 		_octtree.print();
 

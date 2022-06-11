@@ -217,34 +217,17 @@ int main(int argc, char** argv)
 		playerEntity->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(15, 10, 0)));
 
 
-		// ----------------------------init lod models----------------------------
+		// ----------------------------init LOD models----------------------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(100.0f, 100.0f, 100.0f), 8);		
 
 		//init trees
 		std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj"};
-		LODModel treeLODs = InitLodModel(treeModelPaths, textureShader, glm::mat4(1), glm::vec3(-5, 2, 0), geoms, physx);
+		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, textureShader, glm::mat4(1), glm::vec3(-5, 2, 0), geoms, physx)));
 
 		//init plants
 		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj" };
-		LODModel plantLODs = InitLodModel(treeModelPaths, textureShader, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx);
+		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, textureShader, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx)));
 
-		/*     
-		//init code pre cleanup
-		std::shared_ptr<Model> plant_01 = std::make_shared<Model>("assets/potted_plant_obj.obj", textureShader);
-		std::shared_ptr<Model> plant_02 = std::make_shared<Model>("assets/potted_plant_obj_02.obj", textureShader);
-		std::shared_ptr<PhysxStaticEntity> plantEntity_01 = std::make_shared<PhysxStaticEntity>(physx, plant_01, geoms, false);
-		std::shared_ptr<PhysxStaticEntity> plantEntity_02 = std::make_shared<PhysxStaticEntity>(physx, plant_02, geoms, false);
-		plantEntity_01->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)));
-		plantEntity_02->setGlobalPose(glm::translate(glm::mat4(1), glm::vec3(0, 0, 0)));
-		collisionStatics.push_back(plantEntity_01);
-		collisionStatics.push_back(plantEntity_02);
-		LODModel plantLODs(plantEntity_01);
-		plantLODs.addModel(plantEntity_02);
-		*/
-
-		_octtree.insert(OcttreeNode(treeLODs));
-		_octtree.insert(OcttreeNode(plantLODs));
-		
 		_octtree.print();
 
 

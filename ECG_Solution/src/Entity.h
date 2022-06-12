@@ -35,8 +35,10 @@ public:
     PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isDynamic);
 };
 
+//TODO replace flower bool with enum for different geometries in scene
 class PhysxStaticEntity : public PhysxEntity {
 public: 
+    bool flowerToBeVisited;
     physx::PxRigidStatic* _actor;
     virtual void draw(Camera& camera, DirectionalLight& dirL);
     virtual void setGlobalPose(glm::mat4 transform);

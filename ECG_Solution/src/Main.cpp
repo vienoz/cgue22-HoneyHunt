@@ -189,7 +189,6 @@ int main(int argc, char** argv)
 	GamePhysx physx;
 
 	TextHandler text;
-	text.textLib;
 
 	/* --------------------------------------------- */
 	// Initialize scene and render loop
@@ -200,6 +199,7 @@ int main(int argc, char** argv)
 		auto woodShader = AssetManager::getInstance()->getShader("assets/wood");
 		auto framebufferProgram = AssetManager::getInstance()->getShader("assets/framebuffer");
 		AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
+		text.setUpShader("assets/textShader.vert.glsl", "assets/textShader.frag.glsl");
 
 		auto defaultMaterial = AssetManager::getInstance()->defaultMaterial;
 		std::shared_ptr<BaseMaterial> playerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
@@ -232,7 +232,7 @@ int main(int argc, char** argv)
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 
 		//--------------------frame buffers (post processing)------------------------
-		
+		/*
 		// Prepare framebuffer rectangle VBO and VAO
 		unsigned int rectVAO, rectVBO;
 		glGenVertexArrays(1, &rectVAO);
@@ -273,7 +273,7 @@ int main(int argc, char** argv)
 		if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
 			std::cout << "Framebuffer error: " << fboStatus << std::endl;
 		
-			
+			*/
 		//-----------------------------------Render loop------------------------------------
 		float t = float(glfwGetTime());
 		float dt = 0.0f;
@@ -292,7 +292,7 @@ int main(int argc, char** argv)
 			physx.getScene()->fetchResults(true);
 
 			//render buffer setup 
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 			glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glEnable(GL_DEPTH_TEST);
@@ -303,12 +303,12 @@ int main(int argc, char** argv)
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement());
 
 			// draw
+			text.drawText("doing text", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+
 			playerEntity->draw(camera, dirL);
 			
 			_octtree.setLodIDs(playerEntity->getPosition());
 			_octtree.draw(camera, dirL);
-
-			text.drawText("doing text", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 
 			//collision handling
 			if (physx.callback.collisionObj != NULL) {
@@ -329,12 +329,12 @@ int main(int argc, char** argv)
 			
 			
 			// Bind the default framebuffer
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		/*	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			framebufferProgram->use();
 			glBindVertexArray(rectVAO);
 			glDisable(GL_DEPTH_TEST); // prevents framebuffer rectangle from being discarded
 			glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glDrawArrays(GL_TRIANGLES, 0, 6);*/
 			
  			glfwSwapBuffers(window);
 			glfwPollEvents();

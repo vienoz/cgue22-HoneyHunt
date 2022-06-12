@@ -40,10 +40,10 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 glm::vec3 updateMovement();
 
 LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower);
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name);
 
 std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower);
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name);
 
 std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
@@ -219,7 +219,7 @@ int main(int argc, char** argv)
 
 		std::vector<physx::PxGeometry> geoms;
 		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/sphere.obj", defaultMaterial);
-		_fallbackEntity = std::make_shared<PhysxStaticEntity>(physx, fallbackModel, geoms, false);
+		_fallbackEntity = std::make_shared<PhysxStaticEntity>(physx, fallbackModel, geoms, false, "fallbackEnt");
 
 		// ----------------------------init static models--------------------
 		playerEntity = InitDynamicEntity("assets/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx);
@@ -230,7 +230,7 @@ int main(int argc, char** argv)
 		generateFlowers(25, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), 1.0f, woodMaterial, geoms, physx);
 
 		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj", "assets/sphere.obj" };
-		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx, false)));
+		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx, false, "pottedPlant")));
 
 		//_octtree.print();
 
@@ -287,6 +287,8 @@ int main(int argc, char** argv)
 		float dt = 0.0f;
 		float t_sum = 0.0f;
 		double mouse_x, mouse_y;
+		//SET TIMER
+		std::clock_t time = 30;
 		while (!glfwWindowShouldClose(window)) {
 
 			// Compute frame time
@@ -311,12 +313,15 @@ int main(int argc, char** argv)
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement());
 
 			// draw
-			//text.drawText("doing text", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-			text.drawText("current progess: " + std::to_string(counter), 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 			playerEntity->draw(camera, dirL);
-			
-			_octtree.setLodIDs(playerEntity->getPosition());
-			_octtree.draw(camera, dirL);
+			if (time-t_sum > 0) {
+				text.drawText("current progess: " + std::to_string(counter), 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+				text.drawText("countdown: " + std::to_string((int)(time - t_sum)), 230.0f, 550.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+				_octtree.setLodIDs(playerEntity->getPosition());
+				_octtree.draw(camera, dirL);
+			}else {
+				text.drawText("you scored: " + std::to_string(counter), 200.0f, 200.0f, 2.0f, glm::vec3(0.5, 0.8f, 0.2f));
+			}
 
 			//collision handling
 			//check for collision
@@ -325,13 +330,14 @@ int main(int argc, char** argv)
 				//iterate over static objects in scene
 				for (auto const& value : collisionStatics) {
 					//if callback actor is same as current actor
-					if (value->getPhysxActor() == physx.callback.collisionObj) {
+					if (value->flowerToBeVisited == true && value->getPhysxActor() == physx.callback.collisionObj) {
 						physx::PxShape* temp;
-						//compare if collision is between shapes at indeces one
+						//compare if collision is between shapes at indeces two
 						value->getPhysxActor()->getShapes(&temp, 1, 2);
 						if (temp == physx.callback.collisionShapes) {
+							std::cout << (value->_actor->getName()) << "\n";
 							counter++;
-			
+							value->flowerToBeVisited = false;
 						}
 					}
 					n++;
@@ -364,10 +370,10 @@ int main(int argc, char** argv)
 }
 
 std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material, 
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower)
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name)
 {
 	std::shared_ptr<Model> model = std::make_shared<Model>(modelPath, material);
-	std::shared_ptr<PhysxStaticEntity> entity = std::make_shared<PhysxStaticEntity>(physx, model, geoms, flower);
+	std::shared_ptr<PhysxStaticEntity> entity = std::make_shared<PhysxStaticEntity>(physx, model, geoms, flower, name);
 	entity->setGlobalPose(glm::translate(rotation, position));
 	collisionStatics.push_back(entity);
 	return entity;
@@ -383,11 +389,11 @@ std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::sha
 }
 
 LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower)
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name)
 {
 	LODModel models;
 	for (auto const& path : modelPaths)
-		models.addModel(InitStaticEntity(path, material, rotation, position, geoms, physx, flower));
+		models.addModel(InitStaticEntity(path, material, rotation, position, geoms, physx, flower, name));
 
 	return models;
 }
@@ -424,9 +430,11 @@ void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMul
 	std::uniform_int_distribution<std::mt19937::result_type> distX(min.x, max.x); // distribution in range [minX, maxX]
 	std::uniform_int_distribution<std::mt19937::result_type> distZ(min.y, max.y); // distribution in range [minY, maxY]
 	
-	for (uint32_t i = 0; i < count; ++i)
-		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, material, 
-			glm::mat4(1), glm::vec3(distX(rng)-(max.x/2), 0, distZ(rng)- (max.y / 2)), geoms, physx, false)));
+	for (uint32_t i = 0; i < count; ++i) {
+		std::string n = "tree: " + std::to_string(i);
+		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, material,
+			glm::mat4(1), glm::vec3(distX(rng) - (max.x / 2), 0, distZ(rng) - (max.y / 2)), geoms, physx, false, n.c_str())));
+	}
 }
 
 void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
@@ -439,9 +447,11 @@ void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomM
 	std::uniform_int_distribution<std::mt19937::result_type> distX(min.x, max.x); // distribution in range [minX, maxX]
 	std::uniform_int_distribution<std::mt19937::result_type> distZ(min.y, max.y); // distribution in range [minY, maxY]
 
-	for (uint32_t i = 0; i < count; ++i)
+	for (uint32_t i = 0; i < count; ++i) {
+		std::string n = "flower: " + std::to_string(i);
 		_octtree.insert(OcttreeNode(InitLodModel(flowerModelPaths, material,
-			glm::mat4(1), glm::vec3(distX(rng) - (max.x / 2), 0, distZ(rng) - (max.y / 2)), geoms, physx, true)));
+			glm::mat4(1), glm::vec3(distX(rng) - (max.x / 2), 0, distZ(rng) - (max.y / 2)), geoms, physx, true, n.c_str())));
+	}
 
 }
 

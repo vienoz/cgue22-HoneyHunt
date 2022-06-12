@@ -77,10 +77,9 @@ void PhysxDynamicEntity::draw(Camera& camera, DirectionalLight& dirL)
     _model->draw(modelMatrix, camera, dirL);
 }
 
-PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower)
+PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower = false)
     : PhysxEntity(physx, model)
 {
-    //physx::PxRigidStatic
     physx::PxRigidDynamic* me = physx.getPhysics()->createRigidDynamic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
 
     physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxCapsuleGeometry(1, 2), *physx.getMaterial());
@@ -92,6 +91,7 @@ PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> 
 
     me->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
     _actor = me;
+    _actor->setName("Player");
 
     physx.getScene()->addActor(*_actor);
 }
@@ -104,19 +104,20 @@ glm::vec3 PhysxDynamicEntity::getPosition()
 
 
 //first shape should always be collision relevant one, which is the sphere in this instance for whatever reason
-PhysxStaticEntity::PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower)
+PhysxStaticEntity::PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower = false, const char* name = "placeholder")
     : PhysxEntity(physx, model)
 {
     flowerToBeVisited = flower;
     physx::PxRigidStatic* me = physx.getPhysics()->createRigidStatic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
-    if (!flower) {
+    me->setName(name);
+    if (!flowerToBeVisited) {
         physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(1, 1, 1), *physx.getMaterial());
         physx::PxShape* shape = physx.gPhysics->createShape(physx::PxSphereGeometry(1.0f), *physx.getMaterial(), true);
         shape->setLocalPose(physx::PxTransform(physx::PxVec3(0.0, 4.0, 0.0)));
         me->attachShape(*shape);
     }
 
-    if (flower) {
+    if (flowerToBeVisited) {
         physx::PxShape* stem = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(0.5, 8, 0.5), *physx.getMaterial());
         physx::PxShape* base = physx.gPhysics->createShape(physx::PxBoxGeometry(3.5, 0.2, 3.5), *physx.getMaterial(), true);
         base->setLocalPose(physx::PxTransform(physx::PxVec3(0.0, 8.1, 0.0)));
@@ -131,18 +132,11 @@ PhysxStaticEntity::PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> mo
         me->attachShape(*blossom);
     }
 
-
-
-
-
-    physx::PxTransform a;
-    a.p = physx::PxVec3(0.0, 4.0, 0.0);
-
-
     me->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
     _actor = me;
 
     physx.getScene()->addActor(*_actor);
+    std::cout << _actor->getName() << std::endl;
 }
 
 void PhysxStaticEntity::draw(Camera& camera, DirectionalLight& dirL)

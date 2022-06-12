@@ -22,6 +22,7 @@ public:
 class PhysxDynamicEntity : public PhysxEntity
 {
 public:
+    bool flowerToBeVisited =  false;
     physx::PxRigidDynamic* _actor;
     virtual void draw(Camera& camera, DirectionalLight& dirL);
     virtual void setGlobalPose(glm::mat4 transform);
@@ -32,7 +33,7 @@ public:
         return _actor;
     }
 
-    PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isDynamic);
+    PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower);
 };
 
 //TODO replace flower bool with enum for different geometries in scene
@@ -49,5 +50,5 @@ public:
         return _actor;
     }
 
-    PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool isDynamic);
+    PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower, const char* name);
 };

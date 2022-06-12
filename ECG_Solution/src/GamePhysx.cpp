@@ -84,5 +84,6 @@ void GamePhysx::init() {
 	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
 
 	physx::PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, physx::PxPlane(0, 1, 0, 0), *gMaterial);
+	groundPlane->setName("ground");
 	gScene->addActor(*groundPlane);
 }

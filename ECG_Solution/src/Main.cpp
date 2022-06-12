@@ -5,7 +5,8 @@
 */
 // Codename HoneyHero Polygonal Engine Copyright 2022 Julia Hofmann :)
 
-
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 #include "Utils.h"
 #include <sstream>
 #include "Light.h"
@@ -70,12 +71,34 @@ float rectangleVertices[] = {
    -1.0f,  1.0f, 0.0f, 1.0f,
 };
 
+float quadVertices[] = { 
+   -1.0f,  1.0f,	0.0f, 1.0f,
+   -1.0f, -1.0f,	0.0f, 0.0f,
+	1.0f, -1.0f,	1.0f, 0.0f,
+
+   -1.0f,  1.0f,	0.0f, 1.0f,
+	1.0f, -1.0f,	1.0f, 0.0f,
+	1.0f,  1.0f,	1.0f, 1.0f
+};
+
+float planeVertices[] = {
+	// positions          // texture Coords 
+	 5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
+	-5.0f, -0.5f,  5.0f,  0.0f, 0.0f,
+	-5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
+
+	 5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
+	-5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
+	 5.0f, -0.5f, -5.0f,  2.0f, 2.0f
+};
+
 Camera camera;
 Octtree _octtree;
 std::shared_ptr<PhysxDynamicEntity> playerEntity;
 std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
 std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
 std::shared_ptr<PhysxStaticEntity> _fallbackEntity;
+unsigned int loadTexture(char const* path);
 
 
 #if 0
@@ -186,29 +209,67 @@ int main(int argc, char** argv)
 
 	long int unsigned long ticks = 0;
 
+	//setup physx
 	GamePhysx physx;
+	physx::PxDefaultAllocator gAllocator;
+	physx::PxDefaultErrorCallback gErrorCallback;
+
+	physx::PxFoundation* gFoundation = NULL;
+	physx::PxPhysics* gPhysics = NULL;
+
+	physx::PxDefaultCpuDispatcher* gDispatcher = NULL;
+	physx::PxScene* gScene = NULL;
+
+	physx::PxMaterial* gMaterial = NULL;
+	physx::PxPvd* gPvd = NULL;
+	physx::PxReal stackZ = 10.0f;
+
+	//init physx
+	/*
+	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
+
+	gPvd = PxCreatePvd(*gFoundation);
+	physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
+	gPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
+
+	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(), true, gPvd);
+
+	physx::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
+	sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
+	gDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
+	sceneDesc.cpuDispatcher = gDispatcher;
+	sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
+	gScene = gPhysics->createScene(sceneDesc);
+
+	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+	physx::PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, physx::PxPlane(0,1,0,1), *gMaterial);
+	gScene->addActor(*groundPlane);
+	*/
 
 	TextHandler text;
 	text.textLib;
-
-	/* --------------------------------------------- */
-	// Initialize scene and render loop
-	/* --------------------------------------------- */
 	{
-		// Load shader(s)
+		//-----------------load shaders ------------------
 		auto celShader = AssetManager::getInstance()->getShader("assets/texture_cel");
 		auto woodShader = AssetManager::getInstance()->getShader("assets/wood");
 		auto framebufferProgram = AssetManager::getInstance()->getShader("assets/framebuffer");
 		AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
 
+		auto bufferShader = AssetManager::getInstance()->getShader("assets/framebuffer");
+		auto screenShader = AssetManager::getInstance()->getShader("assets/framebuffer_screen");;;
+		bufferShader->use();
+		screenShader->use();
+		//shader.setInt("texture1", 0);
+		//bufferShader->setUniform("texture1", 0);
+		//screenShader->setUniform("screenTexture", 0); //TODO: makes error
+
+
+		//materials
 		auto defaultMaterial = AssetManager::getInstance()->defaultMaterial;
 		std::shared_ptr<BaseMaterial> playerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
 		std::shared_ptr<BaseMaterial> woodMaterial = std::make_shared<BaseMaterial>(woodShader);
 		std::shared_ptr<OutlineShadedMaterial> outlineMaterial= std::make_shared<OutlineShadedMaterial>(framebufferProgram);
 		
-		//TODO: make outline testing clean
-		//framebufferProgram->use();
-		//glUniform1i(glGetUniformLocation(frameBufferProgram->ID, AssetManager::getInstance()->getTexture("assets/textures/white.dds")), 0);
 
 		std::vector<physx::PxGeometry> geoms;
 		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/sphere.obj", defaultMaterial);
@@ -231,56 +292,71 @@ int main(int argc, char** argv)
 		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 
-		//--------------------frame buffers (post processing)------------------------
-		
-		// Prepare framebuffer rectangle VBO and VAO
-		unsigned int rectVAO, rectVBO;
-		glGenVertexArrays(1, &rectVAO);
-		glGenBuffers(1, &rectVBO);
-		glBindVertexArray(rectVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, rectVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), &rectangleVertices, GL_STATIC_DRAW);
+		/*
+
+		//floor VAP
+		unsigned int planeVAO, planeVBO;
+		glGenVertexArrays(1, &planeVAO);
+		glGenBuffers(1, &planeVBO);
+		glBindVertexArray(planeVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), &planeVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+		// screen quad VAO
+		unsigned int quadVAO, quadVBO;
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-		
-		// Create Frame Buffer Object
-		unsigned int fbo;
-		glGenFramebuffers(1, &fbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		
-		// Create Framebuffer Texture
-		unsigned int framebufferTexture;
-		glGenTextures(1, &framebufferTexture);
-		glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, 0);
+		*/
 
-		// Create Render Buffer Object
+		/*
+		//--------------------frame buffers (post processing)------------------------ 
+		unsigned int framebuffer;
+		glGenFramebuffers(1, &framebuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		// create a color attachment texture
+		unsigned int textureColorbuffer;
+		glGenTextures(1, &textureColorbuffer);
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+		// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
 		unsigned int rbo;
 		glGenRenderbuffers(1, &rbo);
 		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width, window_height);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width, window_height); // use a single renderbuffer object for both a depth AND stencil buffer.
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+		// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		// Error checking framebuffer
-		auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
-			std::cout << "Framebuffer error: " << fboStatus << std::endl;
+		// draw as wireframe TODO needed?
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		*/
+
+		//ground
 		
-			
+
 		//-----------------------------------Render loop------------------------------------
 		float t = float(glfwGetTime());
-		float dt = 0.0f;
+		float dt = 0.0f; 
 		float t_sum = 0.0f;
 		double mouse_x, mouse_y;
 		while (!glfwWindowShouldClose(window)) {
-
+			std::cout<<"HI!";
 			// Compute frame time
 			dt = t;
 			t = float(glfwGetTime());
@@ -291,23 +367,32 @@ int main(int argc, char** argv)
 			physx.getScene()->simulate(dt); //elapsed time
 			physx.getScene()->fetchResults(true);
 
-			//render buffer setup 
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-			glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+			//bind to frambuffer
+			//glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+			glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+
+			// make sure we clear the framebuffer's content
+			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glEnable(GL_DEPTH_TEST);
+			
+			
+			// draw floor
+			bufferShader->use();
+			unsigned int floorTexture = loadTexture("assets/textures/bee.dds");
+			//glBindVertexArray(planeVAO);
+			glBindTexture(GL_TEXTURE_2D, floorTexture);
+			//bufferShader->setUniform("model", glm::mat4(1.0f)); //TODO: generating error
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindVertexArray(0);
 			
 
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement());
-
-			// draw
+			// draw entites
 			playerEntity->draw(camera, dirL);
-			
 			_octtree.setLodIDs(playerEntity->getPosition());
 			_octtree.draw(camera, dirL);
-
 			text.drawText("doing text", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 
 			//collision handling
@@ -327,21 +412,26 @@ int main(int argc, char** argv)
 			physx.callback.collisionObj = NULL;
 			physx.callback.collisionShapes = NULL;
 			
-			
+			/*
 			// Bind the default framebuffer
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			framebufferProgram->use();
-			glBindVertexArray(rectVAO);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 			glDisable(GL_DEPTH_TEST); // prevents framebuffer rectangle from being discarded
-			glBindTexture(GL_TEXTURE_2D, framebufferTexture);
+			//clear buffers
+			glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // optional
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			screenShader->use();
+			glBindVertexArray(quadVAO);
+			glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
-			
+			*/
  			glfwSwapBuffers(window);
 			glfwPollEvents();
 		}
 		
-		// Clean-up
-		//glDeleteFramebuffers(1, &FBO);
+		// de-alloc resources
+		/*glDeleteVertexArrays(1, &quadVAO);
+		glDeleteBuffers(1, &quadVBO);*/
 		destroyFramework();
 		glfwDestroyWindow(window);
 		glfwTerminate();
@@ -609,4 +699,42 @@ glm::vec3 updateMovement() {
 
 	return glm::vec3(position.x, position.y, position.z);
 	
+}
+
+//TODO replace with AssetLoader
+unsigned int loadTexture(char const* path)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+
+	int width, height, nrComponents;
+	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
+	if (data)
+	{
+		GLenum format;
+		if (nrComponents == 1)
+			format = GL_RED;
+		else if (nrComponents == 3)
+			format = GL_RGB;
+		else if (nrComponents == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+	}
+	else
+	{
+		std::cout << "Texture failed to load at path: " << path << std::endl;
+		stbi_image_free(data);
+	}
+
+	return textureID;
 }

@@ -74,7 +74,6 @@ CelShadedMaterial::~CelShadedMaterial()
 void CelShadedMaterial::setUniforms(glm::mat4 modelMatrix, Camera& camera, DirectionalLight& dirL)
 {
 	TextureMaterial::setUniforms(modelMatrix, camera, dirL);
-
 	_shader->setUniform(6, _materialCoefficients);
 	_shader->setUniform(7, _alpha);
 }

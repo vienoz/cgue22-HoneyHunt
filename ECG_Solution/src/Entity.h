@@ -6,6 +6,9 @@
 #include "Model.h"
 #include "Camera.h"
 
+
+enum class objType { Tree, Flower, Stump, Bee, Ground, Default }; //used for generating appropriate physx actor
+
 class PhysxEntity
 {
 protected:
@@ -50,5 +53,5 @@ public:
         return _actor;
     }
 
-    PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower, const char* name);
+    PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower, objType type);
 };

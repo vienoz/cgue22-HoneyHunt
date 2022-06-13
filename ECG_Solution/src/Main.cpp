@@ -40,10 +40,10 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 glm::vec3 updateMovement();
 
 LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name);
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, objType type);
 
 std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name);
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower,objType type);
 
 std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
 
 	int window_width = reader.GetInteger("window", "width", 800);
 	int window_height = reader.GetInteger("window", "height", 800);
-	int refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
+	int refresh_rate = reader.GetInteger("window", "refresh_rate", 65);
 	bool fullscreen = reader.GetBoolean("window", "fullscreen", false);
 	std::string window_title = reader.Get("window", "title", "HoneyHero");
 	float fov = float(reader.GetReal("camera", "fov", 60.0f));
@@ -213,6 +213,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<BaseMaterial> woodMaterial = std::make_shared<BaseMaterial>(woodShader);
 		std::shared_ptr<BaseMaterial> groundMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/ground_texture.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
 		std::shared_ptr<BaseMaterial> flowerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/flower_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
+		std::shared_ptr<BaseMaterial> treeMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/tree_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<OutlineShadedMaterial> outlineMaterial= std::make_shared<OutlineShadedMaterial>(framebufferProgram);
 		
 		//TODO: make outline testing clean
@@ -221,19 +222,20 @@ int main(int argc, char** argv)
 
 		std::vector<physx::PxGeometry> geoms;
 		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/sphere.obj", defaultMaterial);
-		_fallbackEntity = std::make_shared<PhysxStaticEntity>(physx, fallbackModel, geoms, false, "fallbackEnt");
+		_fallbackEntity = std::make_shared<PhysxStaticEntity>(physx, fallbackModel, geoms, false, objType::Default);
 
 		// ----------------------------init static models--------------------
 		playerEntity = InitDynamicEntity("assets/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx);
-		std::shared_ptr<PhysxStaticEntity> groundEntity = InitStaticEntity("assets/ground.obj", groundMaterial, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx, false, "ground");
-
+		std::shared_ptr<PhysxStaticEntity> groundEntity = InitStaticEntity("assets/ground.obj", groundMaterial, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx, false, objType::Ground);
+		std::shared_ptr<PhysxStaticEntity> stumpEntity = InitStaticEntity("assets/treeStump.obj", woodMaterial, glm::mat4(1), glm::vec3(30, 0, 0), geoms, physx, false, objType::Stump);
+		
 		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4);		
-		GenerateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), 1.0f, woodMaterial, geoms, physx);
+		GenerateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), 1.0f, treeMaterial, geoms, physx);
 		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), 1.0f, flowerMaterial, geoms, physx);
 
 		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj", "assets/sphere.obj" };
-		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx, false, "pottedPlant")));
+		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx, false, objType::Default)));
 
 		//_octtree.print();
 
@@ -320,6 +322,7 @@ int main(int argc, char** argv)
 	
 			if (time-t_sum > 0) {
 				groundEntity->draw(camera, dirL);
+				stumpEntity->draw(camera, dirL);
 				_octtree.setLodIDs(playerEntity->getPosition());
 				_octtree.draw(camera, dirL);
 				text.drawText("current progess: " + std::to_string(counter), 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
@@ -374,10 +377,10 @@ int main(int argc, char** argv)
 }
 
 std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material, 
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name)
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, objType type)
 {
 	std::shared_ptr<Model> model = std::make_shared<Model>(modelPath, material);
-	std::shared_ptr<PhysxStaticEntity> entity = std::make_shared<PhysxStaticEntity>(physx, model, geoms, flower, name);
+	std::shared_ptr<PhysxStaticEntity> entity = std::make_shared<PhysxStaticEntity>(physx, model, geoms, flower, type);
 	entity->setGlobalPose(glm::translate(rotation, position));
 	collisionStatics.push_back(entity);
 	return entity;
@@ -393,16 +396,16 @@ std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::sha
 }
 
 LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name)
+	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, objType type)
 {
 	LODModel models;
 	int n = 0;
 	for (auto const& path : modelPaths) {
 		if (n == 0) {
-			models.addModel(InitStaticEntity(path, material, rotation, position, geoms, physx, flower, name));
+			models.addModel(InitStaticEntity(path, material, rotation, position, geoms, physx, flower, type));
 		}
 		else {
-			models.addModel(InitStaticEntity(path, material, rotation, position, geoms, physx, false, name));
+			models.addModel(InitStaticEntity(path, material, rotation, position, geoms, physx, false, objType::Default));
 		}
 		n++;
 	}
@@ -445,7 +448,7 @@ void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMul
 	for (uint32_t i = 0; i < count; ++i) {
 		std::string n = "tree: " + std::to_string(i);
 		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, material,
-			glm::mat4(1), glm::vec3(positions[i * 2], 0, positions[i * 2 + 1]), geoms, physx, false, n.c_str())));
+			glm::mat4(1), glm::vec3(positions[i * 2], 0, positions[i * 2 + 1]), geoms, physx, false, objType::Tree)));
 	}
 }
 
@@ -463,7 +466,7 @@ void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomM
 	for (uint32_t i = 0; i < count; ++i) {
 		std::string n = "flower: " + std::to_string(i);
 		_octtree.insert(OcttreeNode(InitLodModel(flowerModelPaths, material,
-			glm::mat4(1), glm::vec3(positions[i*2], 0,positions[i*2+1]), geoms, physx, true, n.c_str())));
+			glm::mat4(1), glm::vec3(positions[i*2], 0,positions[i*2+1]), geoms, physx, true, objType::Flower)));
 	}
 
 }

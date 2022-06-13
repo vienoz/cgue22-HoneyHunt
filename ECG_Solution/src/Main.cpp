@@ -335,7 +335,6 @@ int main(int argc, char** argv)
 						//compare if collision is between shapes at indeces two
 						value->getPhysxActor()->getShapes(&temp, 1, 2);
 						if (temp == physx.callback.collisionShapes) {
-							std::cout << (value->_actor->getName()) << "\n";
 							counter++;
 							value->flowerToBeVisited = false;
 						}
@@ -392,8 +391,16 @@ LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMateri
 	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name)
 {
 	LODModel models;
-	for (auto const& path : modelPaths)
-		models.addModel(InitStaticEntity(path, material, rotation, position, geoms, physx, flower, name));
+	int n = 0;
+	for (auto const& path : modelPaths) {
+		if (n == 0) {
+			models.addModel(InitStaticEntity(path, material, rotation, position, geoms, physx, flower, name));
+		}
+		else {
+			models.addModel(InitStaticEntity(path, material, rotation, position, geoms, physx, false, name));
+		}
+		n++;
+	}
 
 	return models;
 }

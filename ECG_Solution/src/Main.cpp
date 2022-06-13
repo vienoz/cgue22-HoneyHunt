@@ -211,6 +211,7 @@ int main(int argc, char** argv)
 		auto defaultMaterial = AssetManager::getInstance()->defaultMaterial;
 		std::shared_ptr<BaseMaterial> playerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
 		std::shared_ptr<BaseMaterial> woodMaterial = std::make_shared<BaseMaterial>(woodShader);
+		std::shared_ptr<BaseMaterial> groundMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/ground_texture.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
 		std::shared_ptr<BaseMaterial> flowerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/flower_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<OutlineShadedMaterial> outlineMaterial= std::make_shared<OutlineShadedMaterial>(framebufferProgram);
 		
@@ -224,11 +225,12 @@ int main(int argc, char** argv)
 
 		// ----------------------------init static models--------------------
 		playerEntity = InitDynamicEntity("assets/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx);
+		std::shared_ptr<PhysxStaticEntity> groundEntity = InitStaticEntity("assets/ground.obj", groundMaterial, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx, false, "ground");
 
 		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4);		
-		GenerateTrees(25, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), 1.0f, woodMaterial, geoms, physx);
-		generateFlowers(25, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), 1.0f, flowerMaterial, geoms, physx);
+		GenerateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), 1.0f, woodMaterial, geoms, physx);
+		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), 1.0f, flowerMaterial, geoms, physx);
 
 		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj", "assets/sphere.obj" };
 		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx, false, "pottedPlant")));
@@ -289,7 +291,7 @@ int main(int argc, char** argv)
 		float t_sum = 0.0f;
 		double mouse_x, mouse_y;
 		//SET TIMER
-		std::clock_t time = 30;
+		std::clock_t time = 60;
 		while (!glfwWindowShouldClose(window)) {
 
 			// Compute frame time
@@ -315,11 +317,13 @@ int main(int argc, char** argv)
 
 			// draw
 			playerEntity->draw(camera, dirL);
+	
 			if (time-t_sum > 0) {
-				text.drawText("current progess: " + std::to_string(counter), 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-				text.drawText("countdown: " + std::to_string((int)(time - t_sum)), 230.0f, 550.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+				groundEntity->draw(camera, dirL);
 				_octtree.setLodIDs(playerEntity->getPosition());
 				_octtree.draw(camera, dirL);
+				text.drawText("current progess: " + std::to_string(counter), 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+				text.drawText("countdown: " + std::to_string((int)(time - t_sum)), 230.0f, 550.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 			}else {
 				text.drawText("you scored: " + std::to_string(counter), 200.0f, 200.0f, 2.0f, glm::vec3(0.5, 0.8f, 0.2f));
 			}
@@ -430,24 +434,24 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
 	std::shared_ptr<BaseMaterial> material, std::vector<physx::PxGeometry> geoms, GamePhysx physx) {
-	std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj", "assets/sphere.obj" };
+	std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample.obj", "assets/sphere.obj" };
 
 	//create advanced random values for x and y
 	std::random_device dev;
 	std::mt19937 rng(dev());
 	std::uniform_int_distribution<std::mt19937::result_type> distX(min.x, max.x); // distribution in range [minX, maxX]
 	std::uniform_int_distribution<std::mt19937::result_type> distZ(min.y, max.y); // distribution in range [minY, maxY]
-	
+	float positions[] = {-60,10,-60,50,-25,70,-20,10,-50,-80,15,-75,45,-80,90,-75,80,-55,55,-45,30,-30,80,-30,65,0,90,15,45,10,15,25,25,50,5,-45};
 	for (uint32_t i = 0; i < count; ++i) {
 		std::string n = "tree: " + std::to_string(i);
 		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, material,
-			glm::mat4(1), glm::vec3(distX(rng) - (max.x / 2), 0, distZ(rng) - (max.y / 2)), geoms, physx, false, n.c_str())));
+			glm::mat4(1), glm::vec3(positions[i * 2], 0, positions[i * 2 + 1]), geoms, physx, false, n.c_str())));
 	}
 }
 
 void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
 	std::shared_ptr<BaseMaterial> material, std::vector<physx::PxGeometry> geoms, GamePhysx physx) {
-	std::vector<string> flowerModelPaths = { "assets/Flower_Test.obj", "assets/Flower_Test_LOD1.obj", "assets/sphere.obj" };
+	std::vector<string> flowerModelPaths = { "assets/Flower_Test.obj", "assets/Flower_Test_LOD1.obj", "assets/Flower_Test_LOD1.obj" };
 
 	//create advanced random values for x and y
 	std::random_device dev;
@@ -455,10 +459,11 @@ void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomM
 	std::uniform_int_distribution<std::mt19937::result_type> distX(min.x, max.x); // distribution in range [minX, maxX]
 	std::uniform_int_distribution<std::mt19937::result_type> distZ(min.y, max.y); // distribution in range [minY, maxY]
 
+	float positions[] = {-65,-80,-40,-80,-15,-80,-25,-60,-50,-65,-70,-65,-60,-50,-35,-45,-50,-35,-65,-30,-15,-30,-35,-5,0,-30,0,-10,30,-15,50,-55,95,-40,65,-10,0,10,-30,20,-65,30,-60,65,-30,50,20,10,45,30,20,35,10,60,25,75,30,35,40,55,80,25,85,45,90,70,60,55,70,65,50,75,75,80};
 	for (uint32_t i = 0; i < count; ++i) {
 		std::string n = "flower: " + std::to_string(i);
 		_octtree.insert(OcttreeNode(InitLodModel(flowerModelPaths, material,
-			glm::mat4(1), glm::vec3(distX(rng) - (max.x / 2), 0, distZ(rng) - (max.y / 2)), geoms, physx, true, n.c_str())));
+			glm::mat4(1), glm::vec3(positions[i*2], 0,positions[i*2+1]), geoms, physx, true, n.c_str())));
 	}
 
 }

@@ -2,6 +2,8 @@
 
 #include "GamePhysx.h"
 
+using namespace physx;
+
 physx::PxFilterFlags contactFilter(
 	physx::PxFilterObjectAttributes attributes0, physx::PxFilterData filterData0,
 	physx::PxFilterObjectAttributes attributes1, physx::PxFilterData filterData1,
@@ -51,13 +53,13 @@ void GamePhysx::init() {
 	scale.length = 100;        // typical length of an object
 	scale.speed = 981;         // typical speed of an object, gravity*1s is a reasonable choice
 
-	//gCooking = PxCreateCooking(PX_PHYSICS_VERSION, *gFoundation, physx::PxCookingParams(scale));
+	//gCooking = PxCreateCooking(PX_PHYSICS_VERSION, *gFoundation, PxCookingParams(scale));
 	//if (!gCooking) throw ("PxCreateCooking failed!");
 
 	// for visual debugger?
-	gPvd = PxCreatePvd(*gFoundation);
-	physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
-	gPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
+	//gPvd = PxCreatePvd(*gFoundation);
+	//physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
+	//gPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
 
 	//create physics
 	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(scale), true, gPvd);
@@ -65,7 +67,6 @@ void GamePhysx::init() {
 
 	//setup scene
 	physx::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
-	//sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
 	sceneDesc.gravity = physx::PxVec3(0.0f, 0.0f, 0.0f);
 	gDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
 	sceneDesc.cpuDispatcher = gDispatcher;
@@ -77,7 +78,7 @@ void GamePhysx::init() {
 
 	gScene = gPhysics->createScene(sceneDesc);
 
-
+	/*
 	//scene client, aslo for debugger
 	physx::PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
 	if (pvdClient)
@@ -85,7 +86,7 @@ void GamePhysx::init() {
 		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
 		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
 		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
-	}
+	}*/
 
 	//create body 
 	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);

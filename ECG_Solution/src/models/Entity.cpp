@@ -102,25 +102,31 @@ glm::vec3 PhysxDynamicEntity::getPosition()
 }
 
 
-PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, physx::PxRigidActor* actor, std::shared_ptr<Model> model, bool flower, const char* name)
+PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, std::shared_ptr<Model> model, bool flower, const char* name)
     : PhysxEntity(gphysx, model)
 {
     flowerToBeVisited = flower;
     physx::PxRigidStatic* rbStatic = gphysx.getPhysics()->createRigidStatic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
     rbStatic->setName(name);
+    
     if (!flowerToBeVisited) {
 
         //create pxTriangleMesh for each Mesh per Model
-        for(Mesh* mesh : *(model->getMeshes()))
+        for (uint32_t i = 0; i < model->getMeshes()->size(); ++i)
         {
-            auto pxMesh = mesh->createPxMesh(gphysx);
+            /* // dynamic mesh cooking 
+            physx::PxTriangleMeshCookingResult::Enum result;
+            auto pxMesh = model->getMeshes()->at(i)->createPxMesh(gphysx);
             physx::PxMeshScale scale( physx::PxVec3(1,1,1),  physx::PxQuat(physx::PxIdentity));
             physx::PxTriangleMeshGeometry geom(pxMesh, scale);
-            physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor, geom ,*gphysx.getMaterial());
-            shape->setLocalPose(actor->getGlobalPose());
+            physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, geom ,*gphysx.getMaterial());
+            */
+            physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxBoxGeometry(0.5, 8, 0.5), *gphysx.getMaterial());
+            shape->setLocalPose(rbStatic->getGlobalPose());
             rbStatic->attachShape(*shape);
-        }        
+        }       
     }
+    
 
     if (flowerToBeVisited) {
         physx::PxShape* stem = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxBoxGeometry(0.5, 8, 0.5), *gphysx.getMaterial());
@@ -141,6 +147,7 @@ PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, physx::PxRigidActor* act
     _actor = rbStatic;
 
     gphysx.getScene()->addActor(*_actor);
+
     std::cout << _actor->getName() << std::endl;
 }
 

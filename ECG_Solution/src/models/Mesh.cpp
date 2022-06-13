@@ -61,16 +61,16 @@ physx::PxTriangleMesh* Mesh::createPxMesh(GamePhysx& gphysx)
 {
     physx::PxTriangleMeshDesc meshDesc;
     meshDesc.points.count           = _vertices.size();
-    meshDesc.points.stride          = sizeof(glm::vec3);
+    meshDesc.points.stride          = sizeof(physx::PxVec3);
     meshDesc.points.data            = _vertices.data();
 
     meshDesc.triangles.count        = _indices.size() / 3;
-    meshDesc.triangles.stride       = 3*sizeof(uint32_t);
+    meshDesc.triangles.stride       = 3*sizeof(physx::PxU32);
     meshDesc.triangles.data         = _indices.data();
 
+    
     physx::PxDefaultMemoryOutputStream writeBuffer;
-    physx::PxTriangleMeshCookingResult::Enum result;
-    bool status = gphysx.getCooking()->cookTriangleMesh(meshDesc, writeBuffer, &result);
+    bool status = gphysx.getCooking()->cookTriangleMesh(meshDesc, writeBuffer);
     if(!status)
         return NULL;
 

@@ -50,5 +50,5 @@ public:
         return _actor;
     }
 
-    PhysxStaticEntity(GamePhysx& physics, physx::PxRigidActor* actor, std::shared_ptr<Model> model, bool flower = false, const char* name = "placeholder");
+    PhysxStaticEntity(GamePhysx& physics, std::shared_ptr<Model> model, bool flower = false, const char* name = "placeholder");
 };

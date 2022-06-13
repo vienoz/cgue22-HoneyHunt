@@ -33,12 +33,7 @@ public:
 
     void draw(glm::mat4 modelMatrix, Camera& camera);
     
-    void Mesh::createConvex(GamePhysx& physx, physx::PxU32 numVerts, const physx::PxVec3* verts, 
-        physx::PxConvexMeshCookingType::Enum convexMeshCookingType, bool directInsertion, physx::PxU32 gaussMapLimit);
     void Mesh::createConvexMeshes(GamePhysx& physics);
     
     physx::PxTriangleMesh* Mesh::createPxMesh(GamePhysx& physx);
-
-    //physx::PxRigidDynamic* generatePxRigidbodyShape();
-    //physx::PxTriangleMesh generateTriangleMesh(physx::PxPhysics, physx::PxCooking cooking);
 };

@@ -77,12 +77,12 @@ void PhysxDynamicEntity::draw(Camera& camera, DirectionalLight& dirL)
     _model->draw(modelMatrix, camera, dirL);
 }
 
-PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, bool flower = false)
-    : PhysxEntity(physx, model)
+PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& gphysx, std::shared_ptr<Model> model, bool flower = false)
+    : PhysxEntity(gphysx, model)
 {
-    physx::PxRigidDynamic* actor = physx.getPhysics()->createRigidDynamic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
+    physx::PxRigidDynamic* actor = gphysx.getPhysics()->createRigidDynamic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
 
-    physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*actor, physx::PxCapsuleGeometry(1, 2), *physx.getMaterial());
+    physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*actor, physx::PxCapsuleGeometry(1, 2), *gphysx.getMaterial());
 
     physx::PxQuat(1.570796, physx::PxVec3(0.0, 1.0, 0.0));
     aBoxShape->setLocalPose(physx::PxTransform(physx::PxQuat(1.570796, physx::PxVec3(0.0, 1.0, 0.0))));
@@ -92,7 +92,7 @@ PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> 
     _actor = actor;
     _actor->setName("Player");
 
-    physx.getScene()->addActor(*_actor);
+    gphysx.getScene()->addActor(*_actor);
 }
 
 glm::vec3 PhysxDynamicEntity::getPosition()
@@ -103,38 +103,45 @@ glm::vec3 PhysxDynamicEntity::getPosition()
 
 
 //first shape should always be collision relevant one, which is the sphere in this instance for whatever reason
-PhysxStaticEntity::PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, bool flower = false, const char* name = "placeholder")
-    : PhysxEntity(physx, model)
+PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, physx::PxRigidActor* actor, std::shared_ptr<Model> model, bool flower = false, const char* name = "placeholder")
+    : PhysxEntity(gphysx, model)
 {
     flowerToBeVisited = flower;
-    physx::PxRigidStatic* me = physx.getPhysics()->createRigidStatic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
-    me->setName(name);
+    physx::PxRigidStatic* rbStatic = gphysx.getPhysics()->createRigidStatic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
+    rbStatic->setName(name);
     if (!flowerToBeVisited) {
-        physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(1, 1, 1), *physx.getMaterial());
-        physx::PxShape* shape = physx.getPhysics()->createShape(physx::PxSphereGeometry(1.0f), *physx.getMaterial(), true);
-        shape->setLocalPose(physx::PxTransform(physx::PxVec3(0.0, 4.0, 0.0)));
-        me->attachShape(*shape);
+        //physx::PxShape* shape = physx.getPhysics()->createShape(physx::PxSphereGeometry(1.0f), *physx.getMaterial(), true);
+
+        for(Mesh* mesh : *(model->getMeshes()))
+        {
+            auto pxMesh = mesh->createPxMesh(gphysx);
+            physx::PxMeshScale scale( physx::PxVec3(1,1,1),  physx::PxQuat(physx::PxIdentity));
+            physx::PxTriangleMeshGeometry geom(pxMesh, scale);
+            physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor, geom ,*gphysx.getMaterial());
+            shape->setLocalPose(actor->getGlobalPose());
+            rbStatic->attachShape(*shape);
+        }        
     }
 
     if (flowerToBeVisited) {
-        physx::PxShape* stem = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(0.5, 8, 0.5), *physx.getMaterial());
-        physx::PxShape* base = physx.getPhysics()->createShape(physx::PxBoxGeometry(3.5, 0.2, 3.5), *physx.getMaterial(), true);
+        physx::PxShape* stem = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxBoxGeometry(0.5, 8, 0.5), *gphysx.getMaterial());
+        physx::PxShape* base = gphysx.getPhysics()->createShape(physx::PxBoxGeometry(3.5, 0.2, 3.5), *gphysx.getMaterial(), true);
         base->setLocalPose(physx::PxTransform(physx::PxVec3(0.0, 8.1, 0.0)));
-        physx::PxShape* blossom = physx.getPhysics()->createShape(physx::PxCapsuleGeometry(1, 1.5), *physx.getMaterial(), true);
+        physx::PxShape* blossom = gphysx.getPhysics()->createShape(physx::PxCapsuleGeometry(1, 1.5), *gphysx.getMaterial(), true);
         physx::PxTransform blossomTrans;
         blossomTrans.p = physx::PxVec3(0.0, 8.5, 0.0);
         blossomTrans.q= physx::PxQuat(1.570796, physx::PxVec3(0.0, 0.0, 1.0));
         blossom->setLocalPose(blossomTrans);
         //blossom->setLocalPose(physx::PxTransform(physx::PxVec3(0.0, 8.5, 0.0)));
         //physx::PxShape* shape = physx.getPhysics()->createShape(physx::PxSphereGeometry(1.0f), *physx.getMaterial(), true);
-        me->attachShape(*base);
-        me->attachShape(*blossom);
+        rbStatic->attachShape(*base);
+        rbStatic->attachShape(*blossom);
     }
 
-    me->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
-    _actor = me;
+    rbStatic->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
+    _actor = rbStatic;
 
-    physx.getScene()->addActor(*_actor);
+    gphysx.getScene()->addActor(*_actor);
     std::cout << _actor->getName() << std::endl;
 }
 

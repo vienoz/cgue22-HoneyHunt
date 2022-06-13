@@ -57,6 +57,28 @@ void Mesh::draw(glm::mat4 modelMatrix, Camera& camera)
     glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
 }
 
+physx::PxTriangleMesh* Mesh::createPxMesh(GamePhysx& physx)
+{
+    physx::PxTriangleMeshDesc meshDesc;
+    meshDesc.points.count           = _vertices.size();
+    meshDesc.points.stride          = sizeof(glm::vec3);
+    meshDesc.points.data            = _vertices.data();
+
+    meshDesc.triangles.count        = _indices.size() / 3;
+    meshDesc.triangles.stride       = 3*sizeof(uint32_t);
+    meshDesc.triangles.data         = _indices.data();
+
+    physx::PxDefaultMemoryOutputStream writeBuffer;
+    physx::PxTriangleMeshCookingResult::Enum* result;
+    bool status = physx.getCooking()->cookTriangleMesh(meshDesc, writeBuffer, result);
+    if(!status)
+        return NULL;
+
+    physx::PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
+    return physx.getPhysics()->createTriangleMesh(readBuffer);
+}
+
+/*
 void Mesh::createConvexMeshes(GamePhysx& physics)
 {
     const physx::PxU32 numVerts = _vertices.size();
@@ -124,3 +146,4 @@ void createConvex(GamePhysx& physx, physx::PxU32 numVerts, const physx::PxVec3* 
 
     convex->release();
 }
+*/

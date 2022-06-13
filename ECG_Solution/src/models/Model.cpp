@@ -94,9 +94,15 @@ Mesh* Model::processMesh(aiMesh* mesh, const aiScene* scene)
     return new Mesh(vertices, indices);
 }
 
+
 std::shared_ptr<BaseMaterial> Model::getMaterial()
 {
     return _material;
+}
+
+std::shared_ptr<std::vector<Mesh*> > Model::getMeshes()
+{
+    return std::make_shared<std::vector<Mesh*> >(_meshes);
 }
 
 /*

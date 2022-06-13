@@ -37,6 +37,8 @@ public:
         physx::PxConvexMeshCookingType::Enum convexMeshCookingType, bool directInsertion, physx::PxU32 gaussMapLimit);
     void Mesh::createConvexMeshes(GamePhysx& physics);
     
+    physx::PxTriangleMesh* Mesh::createPxMesh(GamePhysx& physx);
+
     //physx::PxRigidDynamic* generatePxRigidbodyShape();
     //physx::PxTriangleMesh generateTriangleMesh(physx::PxPhysics, physx::PxCooking cooking);
 };

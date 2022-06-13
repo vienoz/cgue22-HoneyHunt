@@ -41,6 +41,7 @@ public:
     ~Model();
 
     std::shared_ptr<BaseMaterial> getMaterial();
+    std::shared_ptr<std::vector<Mesh*> > getMeshes();
 
     void draw(glm::mat4 modelMatrix, Camera& camera, DirectionalLight& dirL);
 };

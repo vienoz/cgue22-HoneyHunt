@@ -2,8 +2,6 @@
 
 #include "GamePhysx.h"
 
-using namespace physx;
-
 physx::PxFilterFlags contactFilter(
 	physx::PxFilterObjectAttributes attributes0, physx::PxFilterData filterData0,
 	physx::PxFilterObjectAttributes attributes1, physx::PxFilterData filterData1,

@@ -53,5 +53,5 @@ public:
         return _actor;
     }
 
-    PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower, objType type);
+    PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, bool flower, objType type);
 };

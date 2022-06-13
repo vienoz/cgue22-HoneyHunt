@@ -102,85 +102,77 @@ glm::vec3 PhysxDynamicEntity::getPosition()
 }
 
 
-PhysxStaticEntity::PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower, objType type = objType::Default)
-    : PhysxEntity(physx, model)
+PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, std::shared_ptr<Model> model, bool flower, objType type = objType::Default)
+    : PhysxEntity(gphysx, model)
 {
     flowerToBeVisited = flower;
-    physx::PxRigidStatic* me = physx.getPhysics()->createRigidStatic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
+    physx::PxRigidStatic* rbStatic = gphysx.getPhysics()->createRigidStatic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
+    physx::PxTransform transform;
+
     switch (type) {
     case objType::Tree: {
-        me->setName("tree");
-        physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(1, 5, 1), *physx.getMaterial());
-        physx::PxShape* branchLeft = physx.gPhysics->createShape(physx::PxBoxGeometry(1, 8, 1), *physx.getMaterial(), true);
-        physx::PxTransform blTrans;
-        blTrans.p = physx::PxVec3(4.5, 5.0, 0.0);
-        blTrans.q = physx::PxQuat(-0.360305, physx::PxVec3(0.0, 0.0, 1.0));
-        branchLeft->setLocalPose(blTrans);
+        rbStatic->setName("tree");
+        physx::PxShape* branchLeft = gphysx.getPhysics()->createShape(physx::PxBoxGeometry(1, 8, 1), *gphysx.getMaterial(), true);
+        transform.p = physx::PxVec3(4.5, 5.0, 0.0);
+        transform.q = physx::PxQuat(-0.360305, physx::PxVec3(0.0, 0.0, 1.0));
+        branchLeft->setLocalPose(transform);
 
-        physx::PxShape* branchLeft2 = physx.gPhysics->createShape(physx::PxBoxGeometry(1, 5, 1), *physx.getMaterial(), true);
-        physx::PxTransform bl2Trans;
-        bl2Trans.p = physx::PxVec3(10.0, 15.0, -1.0);
-        bl2Trans.q = physx::PxQuat(-0.463225, physx::PxVec3(0.0, 0.0, 1.0));
-        branchLeft2->setLocalPose(bl2Trans);
+        physx::PxShape* branchLeft2 = gphysx.getPhysics()->createShape(physx::PxBoxGeometry(1, 5, 1), *gphysx.getMaterial(), true);
+        transform.p = physx::PxVec3(10.0, 15.0, -1.0);
+        transform.q = physx::PxQuat(-0.463225, physx::PxVec3(0.0, 0.0, 1.0));
+        branchLeft2->setLocalPose(transform);
 
-        physx::PxShape* branchRight = physx.gPhysics->createShape(physx::PxBoxGeometry(1, 5, 1), *physx.getMaterial(), true);
-        physx::PxTransform brTrans;
-        brTrans.p = physx::PxVec3(-3.0, 5.0, 0.0);
-        brTrans.q = physx::PxQuat(0.663225, physx::PxVec3(0.0, 0.0, 1.0));
-        branchRight->setLocalPose(brTrans);
+        physx::PxShape* branchRight = gphysx.getPhysics()->createShape(physx::PxBoxGeometry(1, 5, 1), *gphysx.getMaterial(), true);
+        transform.p = physx::PxVec3(-3.0, 5.0, 0.0);
+        transform.q = physx::PxQuat(0.663225, physx::PxVec3(0.0, 0.0, 1.0));
+        branchRight->setLocalPose(transform);
 
-        physx::PxShape* branchRight2 = physx.gPhysics->createShape(physx::PxBoxGeometry(1, 5, 1), *physx.getMaterial(), true);
-        physx::PxTransform br2Trans;
-        br2Trans.p = physx::PxVec3(-5.0, 13.0, 0.0);
-        br2Trans.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.0, 1.0));
-        branchRight2->setLocalPose(br2Trans);
+        physx::PxShape* branchRight2 = gphysx.getPhysics()->createShape(physx::PxBoxGeometry(1, 5, 1), *gphysx.getMaterial(), true);
+        transform.p = physx::PxVec3(-5.0, 13.0, 0.0);
+        transform.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.0, 1.0));
+        branchRight2->setLocalPose(transform);
 
-        physx::PxShape* leavesLarge = physx.gPhysics->createShape(physx::PxSphereGeometry(8), *physx.getMaterial(), true);
-        physx::PxTransform llTrans;
-        llTrans.p = physx::PxVec3(-8.0, 26.0, 0.0);
-        llTrans.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.9, 1.0));
-        leavesLarge->setLocalPose(llTrans);
+        physx::PxShape* leavesLarge = gphysx.getPhysics()->createShape(physx::PxSphereGeometry(8), *gphysx.getMaterial(), true);
+        transform.p = physx::PxVec3(-8.0, 26.0, 0.0);
+        transform.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.9, 1.0));
+        leavesLarge->setLocalPose(transform);
    
-        physx::PxShape* leavesMedium = physx.gPhysics->createShape(physx::PxSphereGeometry(6), *physx.getMaterial(), true);
-        physx::PxTransform lmTrans;
-        lmTrans.p = physx::PxVec3(-15.0, 23.0, -4.0);              
-        lmTrans.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.9, 0.0)); 
-        leavesMedium->setLocalPose(lmTrans);
+        physx::PxShape* leavesMedium = gphysx.getPhysics()->createShape(physx::PxSphereGeometry(6), *gphysx.getMaterial(), true);
+        transform.p = physx::PxVec3(-15.0, 23.0, -4.0);
+        transform.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.9, 0.0));
+        leavesMedium->setLocalPose(transform);
 
-        physx::PxShape* leavesSmall = physx.gPhysics->createShape(physx::PxSphereGeometry(3.4), *physx.getMaterial(), true);
-        physx::PxTransform lsTrans;
-        lsTrans.p = physx::PxVec3(3.0, 36.0, 1.0);
-        lsTrans.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.9, 0.0));
-        leavesSmall->setLocalPose(lsTrans);
+        physx::PxShape* leavesSmall = gphysx.getPhysics()->createShape(physx::PxSphereGeometry(3.4), *gphysx.getMaterial(), true);
+        transform.p = physx::PxVec3(3.0, 36.0, 1.0);
+        transform.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.9, 0.0));
+        leavesSmall->setLocalPose(transform);
 
-        physx::PxShape* leavesLarge2 = physx.gPhysics->createShape(physx::PxSphereGeometry(7), *physx.getMaterial(), true);
-        physx::PxTransform ll2Trans;
-        ll2Trans.p = physx::PxVec3(15.0, 30.0, -2.0);
-        ll2Trans.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.9, 1.0));
-        leavesLarge2->setLocalPose(ll2Trans);
+        physx::PxShape* leavesLarge2 = gphysx.getPhysics()->createShape(physx::PxSphereGeometry(7), *gphysx.getMaterial(), true);
+        transform.p = physx::PxVec3(15.0, 30.0, -2.0);
+        transform.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.9, 1.0));
+        leavesLarge2->setLocalPose(transform);
 
-        physx::PxShape* leavesMedium2 = physx.gPhysics->createShape(physx::PxSphereGeometry(6), *physx.getMaterial(), true);
-        physx::PxTransform lm2Trans;
-        lm2Trans.p = physx::PxVec3(-15.0, 23.0, -4.0);
-        lm2Trans.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.9, 0.0));
-        leavesMedium2->setLocalPose(lm2Trans);
+        physx::PxShape* leavesMedium2 = gphysx.getPhysics()->createShape(physx::PxSphereGeometry(6), *gphysx.getMaterial(), true);
+        transform.p = physx::PxVec3(-15.0, 23.0, -4.0);
+        transform.q = physx::PxQuat(0.05, physx::PxVec3(0.0, 0.9, 0.0));
+        leavesMedium2->setLocalPose(transform);
         
-        me->attachShape(*branchRight);
-        me->attachShape(*branchRight2);
-        me->attachShape(*branchLeft);
-        me->attachShape(*branchLeft2);
-        me->attachShape(*leavesLarge);
-        me->attachShape(*leavesMedium);
-        me->attachShape(*leavesSmall);
-        me->attachShape(*leavesLarge2);
-        me->attachShape(*leavesMedium2);
+        rbStatic->attachShape(*branchRight);
+        rbStatic->attachShape(*branchRight2);
+        rbStatic->attachShape(*branchLeft);
+        rbStatic->attachShape(*branchLeft2);
+        rbStatic->attachShape(*leavesLarge);
+        rbStatic->attachShape(*leavesMedium);
+        rbStatic->attachShape(*leavesSmall);
+        rbStatic->attachShape(*leavesLarge2);
+        rbStatic->attachShape(*leavesMedium2);
     }
             break;
 
     case objType::Flower: {
-        me->setName("flower");
-        physx::PxShape* stem = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(0.5, 8, 0.5), *physx.getMaterial());
-        physx::PxShape* base = physx.gPhysics->createShape(physx::PxBoxGeometry(3.5, 0.2, 3.5), *physx.getMaterial(), true);
+        rbStatic->setName("flower");
+        physx::PxShape* stem = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxBoxGeometry(0.5, 8, 0.5), *gphysx.getMaterial());
+        physx::PxShape* base = gphysx.getPhysics()->createShape(physx::PxBoxGeometry(3.5, 0.2, 3.5), *gphysx.getMaterial(), true);
         base->setLocalPose(physx::PxTransform(physx::PxVec3(0.0, 8.1, 0.0)));
         physx::PxShape* blossom = gphysx.getPhysics()->createShape(physx::PxCapsuleGeometry(1, 1.5), *gphysx.getMaterial(), true);
         physx::PxTransform blossomTrans;
@@ -189,19 +181,19 @@ PhysxStaticEntity::PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> mo
         blossom->setLocalPose(blossomTrans);
         //blossom->setLocalPose(physx::PxTransform(physx::PxVec3(0.0, 8.5, 0.0)));
         //physx::PxShape* shape = physx.gPhysics->createShape(physx::PxSphereGeometry(1.0f), *physx.getMaterial(), true);
-        me->attachShape(*base);
-        me->attachShape(*blossom); 
+        rbStatic->attachShape(*base);
+        rbStatic->attachShape(*blossom);
     }
             break;
     case objType::Ground: {
-        me->setName("ground"); 
+        rbStatic->setName("ground");
     }
         break;
-    case objType::Default:{me->setName("default"); }
+    case objType::Default:{rbStatic->setName("default"); }
         break;
     case objType::Stump:{
-        me->setName("stump"); 
-        physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*me, physx::PxBoxGeometry(3.5, 3.7, 3.5), *physx.getMaterial());
+        rbStatic->setName("stump");
+        physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxBoxGeometry(3.5, 3.7, 3.5), *gphysx.getMaterial());
       
     }
         break;

@@ -2,8 +2,8 @@
 
 #include <map>
 #include <memory>
-#include "Texture.h"
-#include "Material.h"
+#include "rendering/Texture.h"
+#include "rendering/Material.h"
 
 class AssetManager final
 {

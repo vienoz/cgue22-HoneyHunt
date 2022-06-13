@@ -12,7 +12,7 @@
 #include <fstream>
 #include <map>
 
-#include "LODModel.h"
+#include "models/LODModel.h"
 
 class OcttreeNode
 {

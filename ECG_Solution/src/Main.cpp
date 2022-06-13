@@ -5,25 +5,25 @@
 */
 // Codename HoneyHero Polygonal Engine Copyright 2022 Julia Hofmann :)
 
-
-#include "Utils.h"
 #include <sstream>
-#include "Light.h"
-#include "Camera.h"
-#include "ShaderNew.h"
-#include "Material.h"
-#include "Texture.h"
-#include "GamePhysx.h"
-#include "LODModel.h"
-#include "Model.h"
-#include "Entity.h"
 #include <math.h> 
-#include "Asset.h"
-#include "Octtree.h"
+#include "Utils.h"
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
-#include "TextHandler.h"
 #include <random>
+#include "Asset.h"
+#include "GamePhysx.h"
+#include "rendering/Light.h"
+#include "rendering/Camera.h"
+#include "rendering/ShaderNew.h"
+#include "rendering/Material.h"
+#include "rendering/TextHandler.h"
+#include "rendering/Texture.h"
+#include "models/LODModel.h"
+#include "models/Model.h"
+#include "models/Entity.h"
+#include "models/Octtree.h"
+
 
 //#include <filesystem>
 
@@ -54,6 +54,8 @@ void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMul
 void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
 	std::shared_ptr<BaseMaterial> material, GamePhysx physx);
 
+void createFramebuffer(int width, int height, uint32_t& framebufferID, uint32_t& colorAttachmentID, uint32_t& depthAttachmentID);
+
 /* --------------------------------------------- */
 // Global variables
 /* --------------------------------------------- */
@@ -80,30 +82,6 @@ Octtree _octtree;
 std::shared_ptr<PhysxDynamicEntity> playerEntity;
 std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
 std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
-
-
-#if 0
-int protectedMain(int argc, char** argv);
-
-int main(int argc, char** argv)
-{
-	try
-	{
-		protectedMain(argc, argv);
-		return 0;
-	}
-	catch (const std::exception& e)
-	{
-		std::cerr << "Exception unhandled: " << e.what() << std::endl;
-		return 1;
-	}
-	catch (...)
-	{
-		std::cerr << "Exception of unknown type unhandled" << std::endl;
-		return 1;
-	}
-}
-#endif
 
 int main(int argc, char** argv)
 {
@@ -181,35 +159,30 @@ int main(int argc, char** argv)
 		int counter = 0;
 
 		// Load shader(s)
-		auto celShader =		 AssetManager::getInstance()->getShader("assets/texture_cel");
-		auto woodShader =		 AssetManager::getInstance()->getShader("assets/wood");
-		auto framebufferShader = AssetManager::getInstance()->getShader("assets/framebuffer");
-		text.setUpShader(		 AssetManager::getInstance()->getShader("assets/textShader"));
+		auto celShader =		 AssetManager::getInstance()->getShader("assets/shader/texture_cel");
+		auto woodShader =		 AssetManager::getInstance()->getShader("assets/shader/wood");
+		auto framebufferShader = AssetManager::getInstance()->getShader("assets/shader/framebuffer");
+		auto finalShader =       AssetManager::getInstance()->getShader("assets/shader/final");
+		text.setUpShader(		 AssetManager::getInstance()->getShader("assets/shader/textShader"));
 		auto defaultMaterial =	 AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
 
 		std::shared_ptr<BaseMaterial>			playerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
 		std::shared_ptr<BaseMaterial>			woodMaterial =   std::make_shared<BaseMaterial>(woodShader);
 		std::shared_ptr<OutlineShadedMaterial>  outlineMaterial= std::make_shared<OutlineShadedMaterial>(framebufferShader);
 		
-		//TODO: make outline testing clean
 		framebufferShader->use();
-		//glUniform1i(glGetUniformLocation(framebufferShader->ID, AssetManager::getInstance()->getTexture("assets/textures/white.dds")), 0);
-
-		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/sphere.obj", defaultMaterial);
+		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/models/sphere.obj", defaultMaterial);
 
 		// ----------------------------init static models--------------------
-		playerEntity = InitDynamicEntity("assets/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), physx);
+		playerEntity = InitDynamicEntity("assets/models/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), physx);
 
 		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4);		
 		GenerateTrees(5, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), 1.0f, woodMaterial, physx);
-		generateFlowers(25, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), 1.0f, woodMaterial, physx);
+		generateFlowers(5, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), 1.0f, woodMaterial, physx);
 
-		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj", "assets/sphere.obj" };
+		std::vector<string> plantModelPaths = { "assets/models/potted_plant_obj.obj", "assets/models/potted_plant_obj_02.obj", "assets/models/sphere.obj" };
 		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), physx, false, "pottedPlant")));
-
-		//_octtree.print();
-
 		
 		// ----------------------------init scene----------------------------
 		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
@@ -229,38 +202,10 @@ int main(int argc, char** argv)
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 		
-		// Create Frame Buffer Object
-		unsigned int fbo;
-		glGenFramebuffers(1, &fbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		
-		// Create Framebuffer Texture
-		uint32_t colorAttachmentID, depthAttachmentID;
-
-		glGenTextures(1, &colorAttachmentID);
-		glGenTextures(1, &depthAttachmentID);
-
-		glBindTexture(GL_TEXTURE_2D, colorAttachmentID);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, window_width, window_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
-
-        glBindTexture(GL_TEXTURE_2D, depthAttachmentID);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, window_width, window_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
-        
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachmentID, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthAttachmentID, 0);
-
-
-		// Error checking framebuffer
-		auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
-			std::cout << "Framebuffer error: " << fboStatus << "\n";
-		else
-			std::cout << "Framebuffer complete!" << "\n";
-		
+		uint32_t fbo, colorAttachmentID, depthAttachmentID;
+		uint32_t fbo2, colorAttachmentID2, depthAttachmentID2;
+		createFramebuffer(window_width, window_height, fbo, colorAttachmentID, depthAttachmentID);
+		createFramebuffer(window_width, window_height, fbo2, colorAttachmentID2, depthAttachmentID2);
 
 		//-----------------------------------Render loop------------------------------------
 		float t = float(glfwGetTime());
@@ -284,7 +229,7 @@ int main(int argc, char** argv)
 			//render buffer setup 
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 			glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			glEnable(GL_DEPTH_TEST);
 			
 
@@ -335,10 +280,19 @@ int main(int argc, char** argv)
 			glDisable(GL_CULL_FACE);
 			glBindTexture(GL_TEXTURE_2D, colorAttachmentID);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
-			
+
+			/*glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			finalShader->use();
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, colorAttachmentID);
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, colorAttachmentID2);
+			glDrawArrays(GL_TRIANGLES, 0, 6);*/
+
  			glfwSwapBuffers(window);
 			glfwPollEvents();
 
+		
 			glEnable(GL_CULL_FACE);
 		}
 		
@@ -381,6 +335,36 @@ LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMateri
 	return models;
 }
 
+void createFramebuffer(int width, int height, uint32_t& framebufferID, uint32_t& colorAttachmentID, uint32_t& depthAttachmentID)
+{
+	// Create Frame Buffer Object
+	glGenFramebuffers(1, &framebufferID);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebufferID);
+	
+	// Create Framebuffer Texture
+	glGenTextures(1, &colorAttachmentID);
+	glGenTextures(1, &depthAttachmentID);
+
+	glBindTexture(GL_TEXTURE_2D, colorAttachmentID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
+
+	glBindTexture(GL_TEXTURE_2D, depthAttachmentID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+	
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachmentID, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthAttachmentID, 0);
+
+
+	// Error checking framebuffer
+	auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
+		throw new std::exception("Framebuffer error: " + fboStatus);
+}
+
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
@@ -405,7 +389,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
 	std::shared_ptr<BaseMaterial> material, GamePhysx physx) {
-	std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj", "assets/sphere.obj" };
+	std::vector<string> treeModelPaths = { "assets/models/Lowpoly_tree_sample.obj", "assets/models/Lowpoly_tree_sample2.obj", "assets/models/sphere.obj" };
 
 	//create advanced random values for x and y
 	std::random_device dev;
@@ -422,7 +406,7 @@ void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMul
 
 void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
 	std::shared_ptr<BaseMaterial> material, GamePhysx physx) {
-	std::vector<string> flowerModelPaths = { "assets/Flower_Test.obj", "assets/Flower_Test_LOD1.obj", "assets/sphere.obj" };
+	std::vector<string> flowerModelPaths = { "assets/models/Flower_Test.obj", "assets/models/Flower_Test_LOD1.obj", "assets/models/sphere.obj" };
 
 	//create advanced random values for x and y
 	std::random_device dev;

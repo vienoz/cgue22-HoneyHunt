@@ -26,7 +26,6 @@ class GamePhysxCallback : public physx::PxSimulationEventCallback {
 		physx::PxVec3 a = pairHeader.actors[1]->getGlobalPose().p;
 		collisionObj = pairHeader.actors[1];
 		collisionShapes = pairs->shapes[1];
-		std::cout << pairs->shapes[0] <<" " << pairs->shapes[1] <<"\n";
 		//std::printf("Colission detected\n");
 	}
 public:

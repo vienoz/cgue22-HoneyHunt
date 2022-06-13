@@ -87,6 +87,7 @@ void Camera::update(double mouseX, double mouseY, float zoom, bool dragging, glm
 	}
 	_position.x = _target.x + zoom * -sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
 	_position.y = _target.y + zoom * -sin(glm::radians(_pitch)); //negative to achieve expected y movement
+	if (_position.y < 0) _position.y = 0;
 	_position.z = _target.z + zoom * cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
 
 }

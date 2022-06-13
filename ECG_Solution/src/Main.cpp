@@ -40,19 +40,19 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 glm::vec3 updateMovement();
 
 LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name);
+	glm::mat4 rotation, glm::vec3 position, GamePhysx physx, bool flower, const char* name);
 
 std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name);
+	glm::mat4 rotation, glm::vec3 position, GamePhysx physx, bool flower, const char* name);
 
 std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
+	glm::mat4 rotation, glm::vec3 position, GamePhysx physx);
 
 void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier, std
-	::shared_ptr<BaseMaterial> material, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
+	::shared_ptr<BaseMaterial> material, GamePhysx physx);
 
 void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
-	std::shared_ptr<BaseMaterial> material, std::vector<physx::PxGeometry> geoms, GamePhysx physx);
+	std::shared_ptr<BaseMaterial> material, GamePhysx physx);
 
 /* --------------------------------------------- */
 // Global variables
@@ -80,7 +80,6 @@ Octtree _octtree;
 std::shared_ptr<PhysxDynamicEntity> playerEntity;
 std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
 std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
-std::shared_ptr<PhysxStaticEntity> _fallbackEntity;
 
 
 #if 0
@@ -110,24 +109,21 @@ int main(int argc, char** argv)
 {
 	INIReader reader("assets/settings.ini");
 
-	int window_width = reader.GetInteger("window", "width", 800);
-	int window_height = reader.GetInteger("window", "height", 800);
-	int refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
-	bool fullscreen = reader.GetBoolean("window", "fullscreen", false);
 	std::string window_title = reader.Get("window", "title", "HoneyHero");
-	float fov = float(reader.GetReal("camera", "fov", 60.0f));
+	int window_width =	reader.GetInteger("window", "width", 800);
+	int window_height = reader.GetInteger("window", "height", 800);
+	int refresh_rate =	reader.GetInteger("window", "refresh_rate", 60);
+	bool fullscreen =	reader.GetBoolean("window", "fullscreen", false);
+	float fov =	  float(reader.GetReal("camera", "fov", 60.0f));
 	float nearZ = float(reader.GetReal("camera", "near", 0.1f));
-	float farZ = float(reader.GetReal("camera", "far", 1000.0f));
+	float farZ =  float(reader.GetReal("camera", "far", 1000.0f));
 
 
 	// Create context
 	AssetManager::init();
 	glfwSetErrorCallback([](int error, const char* description) { std::cout << "GLFW error " << error << ": " << description << std::endl; });
-
-	if (!glfwInit()) {
-		EXIT_WITH_ERROR("Failed to init GLFW");
-	}
-
+	if (!glfwInit()) EXIT_WITH_ERROR("Failed to init GLFW");
+	
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // Request OpenGL version 4.3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Request core profile
@@ -140,14 +136,10 @@ int main(int argc, char** argv)
 
 	// Open window
 	GLFWmonitor* monitor = nullptr;
-
-	if (fullscreen)
-		monitor = glfwGetPrimaryMonitor();
+	if (fullscreen)	monitor = glfwGetPrimaryMonitor();
 
 	GLFWwindow* window = glfwCreateWindow(window_width, window_height, window_title.c_str(), monitor, nullptr);
-
 	if (!window) EXIT_WITH_ERROR("Failed to create window");
-
 
 	// This function makes the context of the specified window current on the calling thread. 
 	glfwMakeContextCurrent(window);
@@ -155,26 +147,16 @@ int main(int argc, char** argv)
 	// Initialize GLEW
 	glewExperimental = true;
 	GLenum err = glewInit();
+	if (err != GLEW_OK)	EXIT_WITH_ERROR("Failed to init GLEW: " << glewGetErrorString(err));
 
-	// If GLEW wasn't initialized
-	if (err != GLEW_OK) {
-		EXIT_WITH_ERROR("Failed to init GLEW: " << glewGetErrorString(err));
-	}
-
-	// Debug callback
+	// Register debug callback
 	if (glDebugMessageCallback != NULL) {
-		// Register your callback function.
-
 		glDebugMessageCallback(DebugCallbackDefault, NULL);
-		// Enable synchronous callback. This ensures that your callback function is called
-		// right after an error has occurred. This capability is not defined in the AMD
-		// version.
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); //get callback direct after error
 	}
 
-	if (!initFramework()) {
-		EXIT_WITH_ERROR("Failed to init framework");
-	}
+
+	if (!initFramework()) EXIT_WITH_ERROR("Failed to init framework");
 
 	// set callbacks
 	glfwSetKeyCallback(window, key_callback);
@@ -189,48 +171,42 @@ int main(int argc, char** argv)
 	//Freetype
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	long int unsigned long ticks = 0;
-
+	uint64_t ticks = 0;
+	
 	GamePhysx physx;
-
 	TextHandler text;
 
-	/* --------------------------------------------- */
 	// Initialize scene and render loop
-	/* --------------------------------------------- */
 	{
 		int counter = 0;
 
 		// Load shader(s)
-		auto celShader = AssetManager::getInstance()->getShader("assets/texture_cel");
-		auto woodShader = AssetManager::getInstance()->getShader("assets/wood");
-		auto framebufferProgram = AssetManager::getInstance()->getShader("assets/framebuffer");
-		AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
-		text.setUpShader("assets/textShader.vert.glsl", "assets/textShader.frag.glsl");
+		auto celShader =		 AssetManager::getInstance()->getShader("assets/texture_cel");
+		auto woodShader =		 AssetManager::getInstance()->getShader("assets/wood");
+		auto framebufferShader = AssetManager::getInstance()->getShader("assets/framebuffer");
+		text.setUpShader(		 AssetManager::getInstance()->getShader("assets/textShader"));
+		auto defaultMaterial =	 AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
 
-		auto defaultMaterial = AssetManager::getInstance()->defaultMaterial;
-		std::shared_ptr<BaseMaterial> playerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
-		std::shared_ptr<BaseMaterial> woodMaterial = std::make_shared<BaseMaterial>(woodShader);
-		std::shared_ptr<OutlineShadedMaterial> outlineMaterial= std::make_shared<OutlineShadedMaterial>(framebufferProgram);
+		std::shared_ptr<BaseMaterial>			playerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
+		std::shared_ptr<BaseMaterial>			woodMaterial =   std::make_shared<BaseMaterial>(woodShader);
+		std::shared_ptr<OutlineShadedMaterial>  outlineMaterial= std::make_shared<OutlineShadedMaterial>(framebufferShader);
 		
 		//TODO: make outline testing clean
-		//framebufferProgram->use();
-		//glUniform1i(glGetUniformLocation(frameBufferProgram->ID, AssetManager::getInstance()->getTexture("assets/textures/white.dds")), 0);
+		framebufferShader->use();
+		//glUniform1i(glGetUniformLocation(framebufferShader->ID, AssetManager::getInstance()->getTexture("assets/textures/white.dds")), 0);
 
-		std::vector<physx::PxGeometry> geoms;
 		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/sphere.obj", defaultMaterial);
-		_fallbackEntity = std::make_shared<PhysxStaticEntity>(physx, fallbackModel, geoms, false, "fallbackEnt");
 
 		// ----------------------------init static models--------------------
-		playerEntity = InitDynamicEntity("assets/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx);
+		playerEntity = InitDynamicEntity("assets/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), physx);
 
 		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4);		
-		GenerateTrees(25, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), 1.0f, woodMaterial, geoms, physx);
-		generateFlowers(25, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), 1.0f, woodMaterial, geoms, physx);
+		GenerateTrees(5, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), 1.0f, woodMaterial, physx);
+		generateFlowers(25, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), 1.0f, woodMaterial, physx);
 
 		std::vector<string> plantModelPaths = { "assets/potted_plant_obj.obj", "assets/potted_plant_obj_02.obj", "assets/sphere.obj" };
-		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), geoms, physx, false, "pottedPlant")));
+		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), physx, false, "pottedPlant")));
 
 		//_octtree.print();
 
@@ -240,7 +216,7 @@ int main(int argc, char** argv)
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 
 		//--------------------frame buffers (post processing)------------------------
-		/*
+		
 		// Prepare framebuffer rectangle VBO and VAO
 		unsigned int rectVAO, rectVBO;
 		glGenVertexArrays(1, &rectVAO);
@@ -259,29 +235,33 @@ int main(int argc, char** argv)
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		
 		// Create Framebuffer Texture
-		unsigned int framebufferTexture;
-		glGenTextures(1, &framebufferTexture);
-		glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		uint32_t colorAttachmentID, depthAttachmentID;
+
+		glGenTextures(1, &colorAttachmentID);
+		glGenTextures(1, &depthAttachmentID);
+
+		glBindTexture(GL_TEXTURE_2D, colorAttachmentID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, window_width, window_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Prevents edge bleeding
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferTexture, 0);
 
-		// Create Render Buffer Object
-		unsigned int rbo;
-		glGenRenderbuffers(1, &rbo);
-		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width, window_height);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+        glBindTexture(GL_TEXTURE_2D, depthAttachmentID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, window_width, window_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+        
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachmentID, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthAttachmentID, 0);
+
 
 		// Error checking framebuffer
 		auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
-			std::cout << "Framebuffer error: " << fboStatus << std::endl;
+			std::cout << "Framebuffer error: " << fboStatus << "\n";
+		else
+			std::cout << "Framebuffer complete!" << "\n";
 		
-			*/
+
 		//-----------------------------------Render loop------------------------------------
 		float t = float(glfwGetTime());
 		float dt = 0.0f;
@@ -302,7 +282,7 @@ int main(int argc, char** argv)
 			physx.getScene()->fetchResults(true);
 
 			//render buffer setup 
-			//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 			glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glEnable(GL_DEPTH_TEST);
@@ -324,7 +304,6 @@ int main(int argc, char** argv)
 			}
 
 			//collision handling
-			//check for collision
 			if (physx.callback.collisionObj != NULL) {
 				int n = 0;
 				//iterate over static objects in scene
@@ -348,19 +327,23 @@ int main(int argc, char** argv)
 			
 			
 			// Bind the default framebuffer
-		/*	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			framebufferProgram->use();
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			framebufferShader->use();
+
 			glBindVertexArray(rectVAO);
 			glDisable(GL_DEPTH_TEST); // prevents framebuffer rectangle from being discarded
-			glBindTexture(GL_TEXTURE_2D, framebufferTexture);
-			glDrawArrays(GL_TRIANGLES, 0, 6);*/
+			glDisable(GL_CULL_FACE);
+			glBindTexture(GL_TEXTURE_2D, colorAttachmentID);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
 			
  			glfwSwapBuffers(window);
 			glfwPollEvents();
+
+			glEnable(GL_CULL_FACE);
 		}
 		
 		// Clean-up
-		//glDeleteFramebuffers(1, &FBO);
+		glDeleteFramebuffers(1, &fbo);
 		destroyFramework();
 		glfwDestroyWindow(window);
 		glfwTerminate();
@@ -370,30 +353,30 @@ int main(int argc, char** argv)
 }
 
 std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material, 
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name)
+	glm::mat4 rotation, glm::vec3 position, GamePhysx physx, bool flower, const char* name)
 {
-	std::shared_ptr<Model> model = std::make_shared<Model>(modelPath, material);
-	std::shared_ptr<PhysxStaticEntity> entity = std::make_shared<PhysxStaticEntity>(physx, model, geoms, flower, name);
+	auto model =  std::make_shared<Model>(modelPath, material);
+	auto entity = std::make_shared<PhysxStaticEntity>(physx, model, flower, name);
 	entity->setGlobalPose(glm::translate(rotation, position));
 	collisionStatics.push_back(entity);
 	return entity;
 }
 
 std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx)
+	glm::mat4 rotation, glm::vec3 position, GamePhysx physx)
 {
-	std::shared_ptr<Model> model = std::make_shared<Model>(modelPath, material);
-	std::shared_ptr<PhysxDynamicEntity> entity = std::make_shared<PhysxDynamicEntity>(physx, model, geoms, false);
+	auto model =  std::make_shared<Model>(modelPath, material);
+	auto entity = std::make_shared<PhysxDynamicEntity>(physx, model, false);
 	entity->setGlobalPose(glm::translate(rotation, position));
 	return entity;
 }
 
 LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, const char* name)
+	glm::mat4 rotation, glm::vec3 position, GamePhysx physx, bool flower, const char* name)
 {
 	LODModel models;
 	for (auto const& path : modelPaths)
-		models.addModel(InitStaticEntity(path, material, rotation, position, geoms, physx, flower, name));
+		models.addModel(InitStaticEntity(path, material, rotation, position, physx, flower, name));
 
 	return models;
 }
@@ -421,7 +404,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
-	std::shared_ptr<BaseMaterial> material, std::vector<physx::PxGeometry> geoms, GamePhysx physx) {
+	std::shared_ptr<BaseMaterial> material, GamePhysx physx) {
 	std::vector<string> treeModelPaths = { "assets/Lowpoly_tree_sample.obj", "assets/Lowpoly_tree_sample2.obj", "assets/sphere.obj" };
 
 	//create advanced random values for x and y
@@ -433,12 +416,12 @@ void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMul
 	for (uint32_t i = 0; i < count; ++i) {
 		std::string n = "tree: " + std::to_string(i);
 		_octtree.insert(OcttreeNode(InitLodModel(treeModelPaths, material,
-			glm::mat4(1), glm::vec3(distX(rng) - (max.x / 2), 0, distZ(rng) - (max.y / 2)), geoms, physx, false, n.c_str())));
+			glm::mat4(1), glm::vec3(distX(rng) - (max.x / 2), 0, distZ(rng) - (max.y / 2)), physx, false, n.c_str())));
 	}
 }
 
 void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
-	std::shared_ptr<BaseMaterial> material, std::vector<physx::PxGeometry> geoms, GamePhysx physx) {
+	std::shared_ptr<BaseMaterial> material, GamePhysx physx) {
 	std::vector<string> flowerModelPaths = { "assets/Flower_Test.obj", "assets/Flower_Test_LOD1.obj", "assets/sphere.obj" };
 
 	//create advanced random values for x and y
@@ -450,7 +433,7 @@ void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomM
 	for (uint32_t i = 0; i < count; ++i) {
 		std::string n = "flower: " + std::to_string(i);
 		_octtree.insert(OcttreeNode(InitLodModel(flowerModelPaths, material,
-			glm::mat4(1), glm::vec3(distX(rng) - (max.x / 2), 0, distZ(rng) - (max.y / 2)), geoms, physx, true, n.c_str())));
+			glm::mat4(1), glm::vec3(distX(rng) - (max.x / 2), 0, distZ(rng) - (max.y / 2)), physx, true, n.c_str())));
 	}
 
 }

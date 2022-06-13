@@ -25,7 +25,7 @@ public:
 
 	void drawText(std::string text, float x, float y, float scale, glm::vec3 color);
 
-	void setUpShader(std::string vert, std::string frag);
+	void setUpShader(std::shared_ptr<ShaderNew> shader);
 
 private:
 	void init();

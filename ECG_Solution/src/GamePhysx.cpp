@@ -36,14 +36,23 @@ GamePhysx::~GamePhysx() {
 }
 
 physx::PxFoundation* GamePhysx::getFoundation() const { return gFoundation; }
-physx::PxPhysics* GamePhysx::getPhysics() const { return gPhysics; }
-physx::PxScene* GamePhysx::getScene() const { return gScene; }
-physx::PxMaterial* GamePhysx::getMaterial() const { return gMaterial; }
+physx::PxPhysics* 	 GamePhysx::getPhysics() const { return gPhysics; }
+physx::PxScene* 	 GamePhysx::getScene() const { return gScene; }
+physx::PxMaterial* 	 GamePhysx::getMaterial() const { return gMaterial; }
+physx::PxCooking* 	 GamePhysx::getCooking() const { return gCooking; }
 
 
 void GamePhysx::init() {
+	//init physx
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 	if (!gFoundation) throw ("failed to create PxCreateFoundation");
+
+	physx::PxTolerancesScale scale;
+	scale.length = 100;        // typical length of an object
+	scale.speed = 981;         // typical speed of an object, gravity*1s is a reasonable choice
+
+	//gCooking = PxCreateCooking(PX_PHYSICS_VERSION, *gFoundation, physx::PxCookingParams(scale));
+	//if (!gCooking) throw ("PxCreateCooking failed!");
 
 	// for visual debugger?
 	gPvd = PxCreatePvd(*gFoundation);
@@ -51,13 +60,13 @@ void GamePhysx::init() {
 	gPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
 
 	//create physics
-	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(), true, gPvd);
+	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(scale), true, gPvd);
 	if (!gPhysics) throw ("failed to create PxCreatePhysics");
 
 	//setup scene
 	physx::PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
 	//sceneDesc.gravity = physx::PxVec3(0.0f, -9.81f, 0.0f);
-	sceneDesc.gravity = physx::PxVec3(0.0f, .0f, 0.0f);
+	sceneDesc.gravity = physx::PxVec3(0.0f, 0.0f, 0.0f);
 	gDispatcher = physx::PxDefaultCpuDispatcherCreate(2);
 	sceneDesc.cpuDispatcher = gDispatcher;
 	sceneDesc.kineKineFilteringMode = physx::PxPairFilteringMode::eKEEP; // So kin-kin contacts with be reported
@@ -65,8 +74,6 @@ void GamePhysx::init() {
 	//sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
 	sceneDesc.filterShader = contactFilter;
 	sceneDesc.simulationEventCallback = &callback;
-
-
 
 	gScene = gPhysics->createScene(sceneDesc);
 

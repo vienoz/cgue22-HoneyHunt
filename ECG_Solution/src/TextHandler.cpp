@@ -76,9 +76,16 @@ void TextHandler::init() {
     //FT_Done_FreeType(textLib);
 }
 
+/*
 void TextHandler::setUpShader(std::string vert, std::string frag) {
     textShader = std::make_shared<ShaderNew>(vert, frag);
   
+}
+*/
+
+void TextHandler::setUpShader(std::shared_ptr<ShaderNew> shader) {
+    textShader = shader;
+
 }
 
 void TextHandler::drawText(std::string text, float x, float y, float scale, glm::vec3 color) {

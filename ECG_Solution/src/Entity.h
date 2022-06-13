@@ -33,7 +33,7 @@ public:
         return _actor;
     }
 
-    PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower);
+    PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, bool flower);
 };
 
 //TODO replace flower bool with enum for different geometries in scene
@@ -50,5 +50,5 @@ public:
         return _actor;
     }
 
-    PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, std::vector<physx::PxGeometry> shapes, bool flower, const char* name);
+    PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, bool flower, const char* name);
 };

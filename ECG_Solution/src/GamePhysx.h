@@ -42,13 +42,14 @@ public:
 	~GamePhysx();
 
 	physx::PxFoundation* getFoundation() const;
-	physx::PxPhysics* gPhysics = nullptr;
 	physx::PxPhysics* getPhysics() const;
 	physx::PxScene* getScene() const;
 	physx::PxMaterial* getMaterial() const;
+	physx::PxCooking* getCooking() const;
 	GamePhysxCallback callback;
 
 private:
+	physx::PxPhysics* gPhysics = nullptr;
 	physx::PxDefaultAllocator		gAllocator;
 	physx::PxDefaultErrorCallback	gErrorCallback;
 	physx::PxFoundation* gFoundation = nullptr;
@@ -56,9 +57,8 @@ private:
 	physx::PxPvd* gPvd = nullptr;
 
 	physx::PxScene* gScene = nullptr;
+	physx::PxCooking* gCooking = nullptr;
 	physx::PxMaterial* gMaterial = nullptr;
-
-
 
 	void init();
 };

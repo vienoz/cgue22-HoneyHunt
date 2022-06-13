@@ -5,6 +5,7 @@
 #include <memory>
 #include <glm\glm.hpp>
 #include <GL\glew.h>
+#include "GamePhysx.h"
 
 #include "Camera.h"
 #include "Material.h"
@@ -31,4 +32,11 @@ public:
     ~Mesh();
 
     void draw(glm::mat4 modelMatrix, Camera& camera);
+    
+    void Mesh::createConvex(GamePhysx& physx, physx::PxU32 numVerts, const physx::PxVec3* verts, 
+        physx::PxConvexMeshCookingType::Enum convexMeshCookingType, bool directInsertion, physx::PxU32 gaussMapLimit);
+    void Mesh::createConvexMeshes(GamePhysx& physics);
+    
+    //physx::PxRigidDynamic* generatePxRigidbodyShape();
+    //physx::PxTriangleMesh generateTriangleMesh(physx::PxPhysics, physx::PxCooking cooking);
 };

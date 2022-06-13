@@ -57,7 +57,7 @@ void Mesh::draw(glm::mat4 modelMatrix, Camera& camera)
     glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
 }
 
-physx::PxTriangleMesh* Mesh::createPxMesh(GamePhysx& physx)
+physx::PxTriangleMesh* Mesh::createPxMesh(GamePhysx& gphysx)
 {
     physx::PxTriangleMeshDesc meshDesc;
     meshDesc.points.count           = _vertices.size();
@@ -69,81 +69,11 @@ physx::PxTriangleMesh* Mesh::createPxMesh(GamePhysx& physx)
     meshDesc.triangles.data         = _indices.data();
 
     physx::PxDefaultMemoryOutputStream writeBuffer;
-    physx::PxTriangleMeshCookingResult::Enum* result;
-    bool status = physx.getCooking()->cookTriangleMesh(meshDesc, writeBuffer, result);
+    physx::PxTriangleMeshCookingResult::Enum result;
+    bool status = gphysx.getCooking()->cookTriangleMesh(meshDesc, writeBuffer, &result);
     if(!status)
         return NULL;
 
     physx::PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
-    return physx.getPhysics()->createTriangleMesh(readBuffer);
+    return gphysx.getPhysics()->createTriangleMesh(readBuffer);
 }
-
-/*
-void Mesh::createConvexMeshes(GamePhysx& physics)
-{
-    const physx::PxU32 numVerts = _vertices.size();
-    physx::PxVec3* vertices = new physx::PxVec3[numVerts];
-
-    // Prepare random verts
-    for (physx::PxU32 i = 0; i < numVerts; i++)
-        vertices[i] = physx::PxVec3(_vertices[i].position.x, _vertices[i].position.y, _vertices[i].position.z);
-
-    // Create convex mesh using the quickhull algorithm with different settings
-    printf("-----------------------------------------------\n");
-    printf("Create convex mesh using the quickhull algorithm: \n\n");
-
-    // The default convex mesh creation serializing to a stream, useful for offline cooking.
-    //createConvex(physics, numVerts, vertices, physx::PxConvexMeshCookingType::eQUICKHULL, false, 16);
-
-    delete[] vertices;
-}
-
-void createConvex(GamePhysx& physx, physx::PxU32 numVerts, const physx::PxVec3* verts, physx::PxConvexMeshCookingType::Enum convexMeshCookingType, bool directInsertion, physx::PxU32 gaussMapLimit)
-{
-    physx::PxCookingParams params = physx.getCooking()->getParams();
-    auto gCooking = physx.getCooking();
-
-    // Use the new (default) PxConvexMeshCookingType::eQUICKHULL
-    params.convexMeshCookingType = convexMeshCookingType;
-
-    // If the gaussMapLimit is chosen higher than the number of output vertices, no gauss map is added to the convex mesh data (here 256).
-    // If the gaussMapLimit is chosen lower than the number of output vertices, a gauss map is added to the convex mesh data (here 16).
-    params.gaussMapLimit = gaussMapLimit;
-    gCooking->setParams(params);
-
-    // Setup the convex mesh descriptor
-    physx::PxConvexMeshDesc desc;
-
-    // We provide points only, therefore the PxConvexFlag::eCOMPUTE_CONVEX flag must be specified
-    desc.points.data = verts;
-    desc.points.count = numVerts;
-    desc.points.stride = sizeof(physx::PxVec3);
-    desc.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX;
-
-    physx::PxU32 meshSize = 0;
-    physx::PxConvexMesh* convex = NULL;
-
-    if (directInsertion)
-    {
-        // Directly insert mesh into PhysX
-        convex = gCooking->createConvexMesh(desc, physx.getPhysics()->getPhysicsInsertionCallback());
-        PX_ASSERT(convex);
-    }
-    else
-    {
-        // Serialize the cooked mesh into a stream.
-        physx::PxDefaultMemoryOutputStream outStream;
-        bool res = gCooking->cookConvexMesh(desc, outStream);
-        PX_UNUSED(res);
-        PX_ASSERT(res);
-        meshSize = outStream.getSize();
-
-        // Create the mesh from a stream.
-        physx::PxDefaultMemoryInputData inStream(outStream.getData(), outStream.getSize());
-        convex = physx.getPhysics()->createConvexMesh(inStream);
-        PX_ASSERT(convex);
-    }
-
-    convex->release();
-}
-*/

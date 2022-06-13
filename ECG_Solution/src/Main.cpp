@@ -308,8 +308,9 @@ int main(int argc, char** argv)
 std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material, 
 	glm::mat4 rotation, glm::vec3 position, GamePhysx physx, bool flower, const char* name)
 {
+	physx::PxRigidActor* actor; // todo check if safe
 	auto model =  std::make_shared<Model>(modelPath, material);
-	auto entity = std::make_shared<PhysxStaticEntity>(physx, model, flower, name);
+	auto entity = std::make_shared<PhysxStaticEntity>(physx, actor, model, flower, name);
 	entity->setGlobalPose(glm::translate(rotation, position));
 	collisionStatics.push_back(entity);
 	return entity;

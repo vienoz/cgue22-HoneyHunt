@@ -102,16 +102,15 @@ glm::vec3 PhysxDynamicEntity::getPosition()
 }
 
 
-//first shape should always be collision relevant one, which is the sphere in this instance for whatever reason
-PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, physx::PxRigidActor* actor, std::shared_ptr<Model> model, bool flower = false, const char* name = "placeholder")
+PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, physx::PxRigidActor* actor, std::shared_ptr<Model> model, bool flower, const char* name)
     : PhysxEntity(gphysx, model)
 {
     flowerToBeVisited = flower;
     physx::PxRigidStatic* rbStatic = gphysx.getPhysics()->createRigidStatic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
     rbStatic->setName(name);
     if (!flowerToBeVisited) {
-        //physx::PxShape* shape = physx.getPhysics()->createShape(physx::PxSphereGeometry(1.0f), *physx.getMaterial(), true);
 
+        //create pxTriangleMesh for each Mesh per Model
         for(Mesh* mesh : *(model->getMeshes()))
         {
             auto pxMesh = mesh->createPxMesh(gphysx);

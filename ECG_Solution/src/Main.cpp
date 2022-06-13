@@ -168,7 +168,6 @@ int main(int argc, char** argv)
 
 		std::shared_ptr<BaseMaterial>			playerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
 		std::shared_ptr<BaseMaterial>			woodMaterial =   std::make_shared<BaseMaterial>(woodShader);
-		std::shared_ptr<OutlineShadedMaterial>  outlineMaterial= std::make_shared<OutlineShadedMaterial>(framebufferShader);
 		
 		framebufferShader->use();
 		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/models/sphere.obj", defaultMaterial);
@@ -272,7 +271,7 @@ int main(int argc, char** argv)
 			
 			
 			// Bind the default framebuffer
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo2);
 			framebufferShader->use();
 
 			glBindVertexArray(rectVAO);
@@ -281,13 +280,13 @@ int main(int argc, char** argv)
 			glBindTexture(GL_TEXTURE_2D, colorAttachmentID);
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 
-			/*glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			finalShader->use();
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, colorAttachmentID);
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, colorAttachmentID2);
-			glDrawArrays(GL_TRIANGLES, 0, 6);*/
+			glDrawArrays(GL_TRIANGLES, 0, 6);
 
  			glfwSwapBuffers(window);
 			glfwPollEvents();

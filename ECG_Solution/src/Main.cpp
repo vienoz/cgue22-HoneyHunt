@@ -48,6 +48,8 @@ void generateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, std::shared_ptr
 void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, std::shared_ptr<BaseMaterial> material, GamePhysx physx);
 void createFramebuffer(int width, int height, uint32_t& framebufferID, uint32_t& colorAttachmentID, uint32_t& depthAttachmentID);
 
+bool interact();
+
 
 /* --------------------------------------------- */
 // Global variables
@@ -224,7 +226,9 @@ int main(int argc, char** argv)
 		bool gameOver = false;
 
 		std::clock_t gameOverTime = 60;
-
+		bool insideCollShape = false;
+		physx::PxShape* temp;
+		std::shared_ptr<PhysxStaticEntity> latestCollision;
 		//--------------------Render loop----------------------
 		while (!glfwWindowShouldClose(window)) 
 		{
@@ -275,17 +279,24 @@ int main(int argc, char** argv)
 			if (physx.callback.collisionObj != NULL) {
 				int n = 0;
 				for (auto const& value : collisionStatics) {
-					if (value->flowerToBeVisited == true && value->getRigidStatic() == physx.callback.collisionObj) {
-						physx::PxShape* temp;
+					if (value->getRigidStatic() == physx.callback.collisionObj) {
 						value->getRigidStatic()->getShapes(&temp, 1, 2);
 						if (temp == physx.callback.collisionShapes) {
-							counter++;
-							value->flowerToBeVisited = false;
+							latestCollision = value;
+							insideCollShape = !insideCollShape;
 						}
 					}
 					n++;
 				}
 			}
+			if (insideCollShape == true && latestCollision->flowerToBeVisited==true ) {
+				text.drawText("Press E to interact", 270.0f, 150.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));
+				if (interact()) {
+					counter++;
+					latestCollision->flowerToBeVisited = false;
+				}
+			}
+
 			physx.callback.collisionObj = NULL;
 			physx.callback.collisionShapes = NULL;
 			
@@ -629,4 +640,8 @@ glm::vec3 updateMovement() {
 
 	return glm::vec3(position.x, position.y, position.z);
 	
+}
+
+bool interact() {
+	return keys[GLFW_KEY_E];
 }

@@ -308,12 +308,12 @@ int main(int argc, char** argv)
 
 			if (boostCountdown > 0) {
 				boostCountdown-= dt;
-				text.drawText("boosted: " + std::to_string((int)boostCountdown), 400.0f, 50.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));
+				text.drawText("boosted: " + std::to_string((int)boostCountdown), 550.0f, 25.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));
 			}
 
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
-			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, boostCountdown>0 ? updateMovement(dt*1.5) : updateMovement(dt));
+			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, boostCountdown>0 ? updateMovement(dt*1.8) : updateMovement(dt));
 
 			physx.callback.collisionObj = NULL;
 			physx.callback.collisionShapes = NULL;

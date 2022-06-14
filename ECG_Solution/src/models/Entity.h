@@ -6,7 +6,7 @@
 #include "Model.h"
 
 
-enum class objType { Tree, Flower, Stump, Bee, Ground, Default }; //used for generating appropriate physx actor
+enum class objType { Tree, Flower, Stump, Bee, Ground, Default, PowerUp }; //used for generating appropriate physx actor
 
 class PhysxEntity
 {
@@ -39,6 +39,7 @@ public:
 //TODO replace flower bool with enum for different geometries in scene
 class PhysxStaticEntity : public PhysxEntity {
 public: 
+    objType objectType;
     bool flowerToBeVisited;
     physx::PxRigidStatic* _rigidStatic;
     virtual void draw(Camera& camera, DirectionalLight& dirL);

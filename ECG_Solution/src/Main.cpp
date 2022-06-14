@@ -178,13 +178,15 @@ int main(int argc, char** argv)
 		std::shared_ptr<BaseMaterial> groundMaterial =	std::make_shared<TextureMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/ground_texture.dds"));
 		std::shared_ptr<BaseMaterial> flowerMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/flower_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<BaseMaterial> treeMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/tree_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
+		std::shared_ptr<BaseMaterial> powerUpMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/powerUp_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		auto defaultMaterial =	 AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
 		
 		// ----------------------------init static models--------------------
 		playerEntity = InitDynamicEntity("assets/models/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), physx);
 		std::shared_ptr<PhysxStaticEntity> groundEntity = InitStaticEntity("assets/models/ground.obj", groundMaterial, glm::mat4(1), glm::vec3(15, 10, 0), physx, false, objType::Ground);
 		std::shared_ptr<PhysxStaticEntity> stumpEntity = InitStaticEntity("assets/models/treeStump.obj", woodMaterial, glm::mat4(1), glm::vec3(30, 0, 0), physx, false, objType::Stump);
-		
+		std::shared_ptr<PhysxStaticEntity> powerUpEntity = InitStaticEntity("assets/models/powerUp.obj", powerUpMaterial, glm::mat4(1), glm::vec3(35, 10, 0), physx, false, objType::PowerUp);
+
 		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4, lodLevelMin, lodLevelMax);		
 		generateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), treeMaterial, physx);
@@ -229,6 +231,7 @@ int main(int argc, char** argv)
 		bool insideCollShape = false;
 		physx::PxShape* temp;
 		std::shared_ptr<PhysxStaticEntity> latestCollision;
+		float boostCountdown = 0;
 		//--------------------Render loop----------------------
 		while (!glfwWindowShouldClose(window)) 
 		{
@@ -254,10 +257,6 @@ int main(int argc, char** argv)
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			glEnable(GL_DEPTH_TEST);
 			
-			// Update camera
-			glfwGetCursorPos(window, &mouse_x, &mouse_y);
-			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement(dt));
-
 
 			// draw persitent
 			playerEntity->draw(camera, dirL);
@@ -281,8 +280,8 @@ int main(int argc, char** argv)
 				for (auto const& value : collisionStatics) {
 					if (value->getRigidStatic() == physx.callback.collisionObj) {
 						value->getRigidStatic()->getShapes(&temp, 1, 2);
+						latestCollision = value;
 						if (temp == physx.callback.collisionShapes) {
-							latestCollision = value;
 							insideCollShape = !insideCollShape;
 						}
 					}
@@ -296,6 +295,25 @@ int main(int argc, char** argv)
 					latestCollision->flowerToBeVisited = false;
 				}
 			}
+
+			if (latestCollision !=NULL && latestCollision->objectType == objType::PowerUp) {
+				powerUpEntity->getRigidStatic()->setGlobalPose(physx::PxTransform(physx::PxVec3(0.0,-10.0,0.0)));
+				latestCollision = NULL;
+				boostCountdown = 20;
+			}
+			else {
+				powerUpEntity->draw(camera, dirL);
+				//update powerup position
+			}
+
+			if (boostCountdown > 0) {
+				boostCountdown-= dt;
+				text.drawText("boosted: " + std::to_string((int)boostCountdown), 400.0f, 50.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));
+			}
+
+			// Update camera
+			glfwGetCursorPos(window, &mouse_x, &mouse_y);
+			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, boostCountdown>0 ? updateMovement(dt*1.5) : updateMovement(dt));
 
 			physx.callback.collisionObj = NULL;
 			physx.callback.collisionShapes = NULL;

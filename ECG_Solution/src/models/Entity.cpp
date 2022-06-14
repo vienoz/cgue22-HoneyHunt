@@ -93,6 +93,7 @@ glm::vec3 PhysxDynamicEntity::getPosition()
 PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, std::shared_ptr<Model> model, bool flower, objType type = objType::Default)
     : PhysxEntity(gphysx, model)
 {
+    objectType = type;
     flowerToBeVisited = flower;
     physx::PxRigidStatic* rbStatic = gphysx.getPhysics()->createRigidStatic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
     physx::PxTransform transform;
@@ -190,7 +191,12 @@ PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, std::shared_ptr<Model> m
         physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxBoxGeometry(3.5, 3.7, 3.5), *gphysx.getMaterial());
         }
         break;
+    case objType::PowerUp: {
+        rbStatic->setName("powerUp");
+        physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxSphereGeometry(1.6), *gphysx.getMaterial());
     }
+    }
+
     
     /* // dynamic mesh cooking
     physx::PxTriangleMeshCookingResult::Enum result;

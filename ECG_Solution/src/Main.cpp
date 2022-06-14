@@ -290,7 +290,7 @@ int main(int argc, char** argv)
 				}
 			}
 			if (insideCollShape == true && latestCollision->flowerToBeVisited==true ) {
-				text.drawText("Press E to interact", 270.0f, 150.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));
+				text.drawText("Press E to pollinate", 270.0f, 150.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));
 				if (interact()) {
 					counter++;
 					latestCollision->flowerToBeVisited = false;
@@ -608,24 +608,32 @@ glm::vec3 updateMovement() {
 	glm::vec3 newDirection = glm::normalize(camera.getCameraFoward());
 	
 	float playerDirection = atan2(newDirection.x , newDirection.z);
+	glm::vec2 cFoward = glm::normalize(glm::vec2(camera.getCameraFoward().x, camera.getCameraFoward().z));
+	glm::vec3 cRight = glm::normalize(camera.getCameraRight());
 
 	if (keys[GLFW_KEY_W]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(8*-camera.getCameraFoward().x, 8*-camera.getCameraFoward().y,8* -camera.getCameraFoward().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(8*-cFoward.x, 0 ,8* -cFoward.y), true);
 	}
 	if (keys[GLFW_KEY_A]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * -camera.getCameraRight().x, 6 * -camera.getCameraRight().y, 6 * -camera.getCameraRight().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * -cRight.x, 6 * -cRight.y, 6 * -cRight.z), true);
+	}
+	if (keys[GLFW_KEY_W] && keys[GLFW_KEY_A]) {
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * (-cRight.x + -cFoward.x), 0, 6 * (-cRight.z + -cFoward.y)), true);
 	}
 	if (keys[GLFW_KEY_S]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * camera.getCameraFoward().x, 6 * camera.getCameraFoward().y, 6 * camera.getCameraFoward().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * cFoward.x, 0, 6 * cFoward.y), true);
 	}
 	if (keys[GLFW_KEY_D]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * camera.getCameraRight().x, 6 * camera.getCameraRight().y, 6 * camera.getCameraRight().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * cRight.x, 6 * cRight.y, 6 * cRight.z), true);
+	}
+	if (keys[GLFW_KEY_W] && keys[GLFW_KEY_D]) {
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * (cRight.x + -cFoward.x), 0, 6 * (cRight.z + -cFoward.y)), true);
 	}
 	if (keys[GLFW_KEY_SPACE]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(.0, 4.0, .0), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(playerEntity->getPhysxActor()->getLinearVelocity().x, 4.0, playerEntity->getPhysxActor()->getLinearVelocity().z), true);
 	}
 	if (keys[GLFW_KEY_LEFT_SHIFT]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(.0, -4.0, .0), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(playerEntity->getPhysxActor()->getLinearVelocity().x, -4.0, playerEntity->getPhysxActor()->getLinearVelocity().z), true);
 	}
 
 	physx::PxVec3 position = playerEntity->getPhysxActor()->getGlobalPose().p;

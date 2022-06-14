@@ -24,7 +24,6 @@ class GamePhysxCallback : public physx::PxSimulationEventCallback {
 		(void)(pairHeader);
 		collisionObj = pairHeader.actors[1];
 		collisionShapes = pairs->shapes[1];
-		//std::printf("Colission detected\n");
 	}
 public:
 	physx::PxRigidActor* collisionObj;

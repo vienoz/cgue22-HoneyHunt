@@ -78,6 +78,8 @@ std::shared_ptr<PhysxDynamicEntity> playerEntity;
 std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
 std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
 
+bool hud = true;
+
 
 /* --------------------------------------------- */
 // main
@@ -186,15 +188,15 @@ int main(int argc, char** argv)
 		playerEntity = InitDynamicEntity("assets/models/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), physx);
 		std::shared_ptr<PhysxStaticEntity> groundEntity = InitStaticEntity("assets/models/ground.obj", groundMaterial, glm::mat4(1), glm::vec3(15, 10, 0), physx, false, objType::Ground);
 		std::shared_ptr<PhysxStaticEntity> stumpEntity = InitStaticEntity("assets/models/treeStump.obj", woodMaterial, glm::mat4(1), glm::vec3(30, 0, 0), physx, false, objType::Stump);
-		std::shared_ptr<PhysxStaticEntity> powerUpEntity = InitStaticEntity("assets/models/powerUp.obj", powerUpMaterial, glm::mat4(1), glm::vec3(35, 10, 0), physx, false, objType::PowerUp);
+		std::shared_ptr<PhysxStaticEntity> powerUpEntity = InitStaticEntity("assets/models/powerUp.obj", powerUpMaterial, glm::mat4(1), glm::vec3(0, 0, -65), physx, false, objType::PowerUp);
 
 		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4, lodLevelMin, lodLevelMax);		
 		generateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), treeMaterial, physx);
 		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), flowerMaterial, physx);
 
-		std::vector<string> plantModelPaths = { "assets/models/potted_plant_obj.obj", "assets/models/potted_plant_obj_02.obj", "assets/models/sphere.obj" };
-		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), physx, false, objType::Default)));
+		//std::vector<string> plantModelPaths = { "assets/models/potted_plant_obj.obj", "assets/models/potted_plant_obj_02.obj", "assets/models/sphere.obj" };
+		//_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), physx, false, objType::Default)));
 		
 		// ----------------------------init scene----------------------------
 		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
@@ -268,11 +270,11 @@ int main(int argc, char** argv)
 				stumpEntity->draw(camera, dirL);
 				_octtree.setLodIDs(playerEntity->getPosition());
 				_octtree.draw(camera, dirL);
-				text.drawText("current progess: " + std::to_string(counter), 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-				text.drawText("countdown: " + std::to_string((int)(gameOverTime - timePassed)), 230.0f, 550.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+				if(hud) text.drawText("current progess: " + std::to_string(counter), 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+				if(hud) text.drawText("countdown: " + std::to_string((int)(gameOverTime - timePassed)), 230.0f, 550.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 			}else {
 				//draw game over
-				text.drawText("you scored: " + std::to_string(counter), 200.0f, 200.0f, 2.0f, glm::vec3(0.5, 0.8f, 0.2f));
+				if(hud) text.drawText("you scored: " + std::to_string(counter), 200.0f, 200.0f, 2.0f, glm::vec3(0.5, 0.8f, 0.2f));
 			}
 
 			//collision handling
@@ -310,7 +312,7 @@ int main(int argc, char** argv)
 
 			if (boostCountdown > 0) {
 				boostCountdown-= dt;
-				text.drawText("boosted: " + std::to_string((int)boostCountdown), 550.0f, 25.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));
+				if (hud) text.drawText("boosted: " + std::to_string((int)boostCountdown), 550.0f, 25.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));
 			}
 
 			// Update camera
@@ -505,6 +507,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 		case GLFW_KEY_L:
 			Octtree::IsLodActive = !Octtree::IsLodActive;
+			break;
+
+		case GLFW_KEY_U:
+			hud = !hud;
 			break;
 		}
 	}

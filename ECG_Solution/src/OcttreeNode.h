@@ -11,7 +11,6 @@
 #include <string>
 #include <fstream>
 #include <map>
-
 #include "models/LODModel.h"
 
 class OcttreeNode
@@ -22,6 +21,7 @@ protected:
 
 public:
     OcttreeNode(LODModel lods);
+    OcttreeNode();
     virtual ~OcttreeNode();
 
     glm::vec3 getPosition();

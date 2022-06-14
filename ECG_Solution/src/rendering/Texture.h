@@ -1,18 +1,13 @@
 #pragma once
 
-
 #include <string>
 #include <GL\glew.h>
 #include "../Utils.h"
 
-/*!
- * 2D texture
- */
 class Texture
 {
 protected:
 	GLuint _texHandle;
-	//bool _init;
 	static int texUnit;
 
 public:

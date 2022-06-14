@@ -10,7 +10,6 @@
 #include "Utils.h"
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
-#include <random>
 #include "Asset.h"
 #include "GamePhysx.h"
 #include "rendering/Light.h"
@@ -25,9 +24,6 @@
 #include "models/Octtree.h"
 
 
-//#include <filesystem>
-
-
 /* --------------------------------------------- */
 // Prototypes
 /* --------------------------------------------- */
@@ -40,21 +36,18 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 glm::vec3 updateMovement();
 
 LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower, objType type);
+	glm::mat4 rotation, glm::vec3 position, GamePhysx physx, bool flower, objType type);
 
 std::shared_ptr<PhysxStaticEntity> InitStaticEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
-	glm::mat4 rotation, glm::vec3 position, std::vector<physx::PxGeometry> geoms, GamePhysx physx, bool flower,objType type);
+	glm::mat4 rotation, glm::vec3 position, GamePhysx physx, bool flower,objType type);
 
 std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, GamePhysx physx);
 
-void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier, std
-	::shared_ptr<BaseMaterial> material, GamePhysx physx);
-
-void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
-	std::shared_ptr<BaseMaterial> material, GamePhysx physx);
-
+void generateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, std::shared_ptr<BaseMaterial> material, GamePhysx physx);
+void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, std::shared_ptr<BaseMaterial> material, GamePhysx physx);
 void createFramebuffer(int width, int height, uint32_t& framebufferID, uint32_t& colorAttachmentID, uint32_t& depthAttachmentID);
+
 
 /* --------------------------------------------- */
 // Global variables
@@ -83,6 +76,11 @@ std::shared_ptr<PhysxDynamicEntity> playerEntity;
 std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
 std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
 
+
+/* --------------------------------------------- */
+// main
+/* --------------------------------------------- */
+
 int main(int argc, char** argv)
 {
 	INIReader reader("assets/settings.ini");
@@ -92,9 +90,10 @@ int main(int argc, char** argv)
 	int window_height = reader.GetInteger("window", "height", 800);
 	int refresh_rate =	reader.GetInteger("window", "refresh_rate", 60);
 	bool fullscreen =	reader.GetBoolean("window", "fullscreen", false);
-	float fov =	  float(reader.GetReal("camera", "fov", 60.0f));
-	float nearZ = float(reader.GetReal("camera", "near", 0.1f));
-	float farZ =  float(reader.GetReal("camera", "far", 1000.0f));
+	float fov =	  	   float(reader.GetReal("camera", "fov", 60.0f));
+	float nearZ = 	   float(reader.GetReal("camera", "near", 0.1f));
+	float farZ =  	   float(reader.GetReal("camera", "far", 1000.0f));
+	float brightness = float(reader.GetReal("shading", "brightness", 1.0f));
 
 
 	// Create context
@@ -154,38 +153,38 @@ int main(int argc, char** argv)
 	GamePhysx physx;
 	TextHandler text;
 
+
+	/* --------------------------------------------- */
 	// Initialize scene and render loop
+	/* --------------------------------------------- */
 	{
 		int counter = 0;
 
 		// Load shader(s)
-		auto celShader =		 AssetManager::getInstance()->getShader("assets/shader/texture_cel");
+		auto celShader =		 AssetManager::getInstance()->getShader("assets/shader/cel");
 		auto woodShader =		 AssetManager::getInstance()->getShader("assets/shader/wood");
-		auto framebufferShader = AssetManager::getInstance()->getShader("assets/shader/framebuffer");
+		auto brightnessShader =  AssetManager::getInstance()->getShader("assets/shader/brightness");
 		auto finalShader =       AssetManager::getInstance()->getShader("assets/shader/final");
 		text.setUpShader(		 AssetManager::getInstance()->getShader("assets/shader/textShader"));
-		auto defaultMaterial =	 AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
-
-		auto defaultMaterial = AssetManager::getInstance()->defaultMaterial;
-		std::shared_ptr<BaseMaterial> playerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
-		std::shared_ptr<BaseMaterial> woodMaterial = std::make_shared<BaseMaterial>(woodShader);
-		std::shared_ptr<BaseMaterial> groundMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/ground_texture.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
-		std::shared_ptr<BaseMaterial> flowerMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/flower_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
-		std::shared_ptr<BaseMaterial> treeMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/tree_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		
-		std::vector<physx::PxGeometry> geoms;
-		std::shared_ptr<Model> fallbackModel = std::make_shared<Model>("assets/models/sphere.obj", defaultMaterial);
+		brightnessShader->setUniform(2, brightness);
 
+		std::shared_ptr<BaseMaterial> playerMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
+		std::shared_ptr<BaseMaterial> woodMaterial =	std::make_shared<BaseMaterial>(woodShader);
+		std::shared_ptr<BaseMaterial> groundMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/ground_texture.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
+		std::shared_ptr<BaseMaterial> flowerMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/flower_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
+		std::shared_ptr<BaseMaterial> treeMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/tree_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
+		auto defaultMaterial =	 AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
+		
 		// ----------------------------init static models--------------------
 		playerEntity = InitDynamicEntity("assets/models/biene.obj", playerMaterial, glm::mat4(1), glm::vec3(15, 10, 0), physx);
-		std::shared_ptr<PhysxStaticEntity> groundEntity = InitStaticEntity("assets/models/ground.obj", groundMaterial, glm::mat4(1), glm::vec3(15, 10, 0), geoms, physx, false, objType::Ground);
-		std::shared_ptr<PhysxStaticEntity> stumpEntity = InitStaticEntity("assets/models/treeStump.obj", woodMaterial, glm::mat4(1), glm::vec3(30, 0, 0), geoms, physx, false, objType::Stump);
+		std::shared_ptr<PhysxStaticEntity> groundEntity = InitStaticEntity("assets/models/ground.obj", groundMaterial, glm::mat4(1), glm::vec3(15, 10, 0), physx, false, objType::Ground);
+		std::shared_ptr<PhysxStaticEntity> stumpEntity = InitStaticEntity("assets/models/treeStump.obj", woodMaterial, glm::mat4(1), glm::vec3(30, 0, 0), physx, false, objType::Stump);
 		
 		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4);		
-		
-		GenerateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), 1.0f, treeMaterial, physx);
-		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), 1.0f, flowerMaterial, physx);
+		generateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), treeMaterial, physx);
+		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), flowerMaterial, physx);
 
 		std::vector<string> plantModelPaths = { "assets/models/potted_plant_obj.obj", "assets/models/potted_plant_obj_02.obj", "assets/models/sphere.obj" };
 		_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), physx, false, objType::Default)));
@@ -195,7 +194,6 @@ int main(int argc, char** argv)
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 
 		//--------------------frame buffers (post processing)------------------------
-		
 		// Prepare framebuffer rectangle VBO and VAO
 		unsigned int rectVAO, rectVBO;
 		glGenVertexArrays(1, &rectVAO);
@@ -213,23 +211,35 @@ int main(int argc, char** argv)
 		createFramebuffer(window_width, window_height, fbo, colorAttachmentID, depthAttachmentID);
 		createFramebuffer(window_width, window_height, fbo2, colorAttachmentID2, depthAttachmentID2);
 
-		//-----------------------------------Render loop------------------------------------
+
+		/* --------------------------------------------- */
+		// Initialize scene and render loop
+		/* --------------------------------------------- */
 		float t = float(glfwGetTime());
 		float dt = 0.0f;
-		float t_sum = 0.0f;
+		float timePassed = 0.0f;
 		double mouse_x, mouse_y;
-		//SET TIMER
-		std::clock_t time = 60;
-		while (!glfwWindowShouldClose(window)) {
+		bool gameOver = false;
+
+		std::clock_t gameOverTime = 60;
+
+		//--------------------Render loop----------------------
+		while (!glfwWindowShouldClose(window)) 
+		{
 
 			// Compute frame time
 			dt = t;
 			t = float(glfwGetTime());
 			dt = t - dt;
-			t_sum += dt;
+			timePassed += dt;
 			++ticks;
 
-			physx.getScene()->simulate(dt); //elapsed time
+			//check win condition
+			if (gameOverTime - timePassed <= 0)
+				gameOver = true;
+
+			//simulate physx
+			physx.getScene()->simulate(dt);
 			physx.getScene()->fetchResults(true);
 
 			//render buffer setup 
@@ -238,29 +248,30 @@ int main(int argc, char** argv)
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			glEnable(GL_DEPTH_TEST);
 			
-
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement());
 
-			// draw
+
+			// draw persitent
 			playerEntity->draw(camera, dirL);
-	
-			if (time-t_sum > 0) {
+
+			if (!gameOver) {
+				//draw world
 				groundEntity->draw(camera, dirL);
 				stumpEntity->draw(camera, dirL);
 				_octtree.setLodIDs(playerEntity->getPosition());
 				_octtree.draw(camera, dirL);
 				text.drawText("current progess: " + std::to_string(counter), 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-				text.drawText("countdown: " + std::to_string((int)(time - t_sum)), 230.0f, 550.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+				text.drawText("countdown: " + std::to_string((int)(gameOverTime - timePassed)), 230.0f, 550.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 			}else {
+				//draw game over
 				text.drawText("you scored: " + std::to_string(counter), 200.0f, 200.0f, 2.0f, glm::vec3(0.5, 0.8f, 0.2f));
 			}
 
 			//collision handling
 			if (physx.callback.collisionObj != NULL) {
 				int n = 0;
-				//iterate over static objects in scene
 				for (auto const& value : collisionStatics) {
 					//if callback actor is same as current actor
 					if (value->flowerToBeVisited == true && value->getPhysxActor() == physx.callback.collisionObj) {
@@ -281,7 +292,7 @@ int main(int argc, char** argv)
 			
 			// Bind the default framebuffer
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo2);
-			framebufferShader->use();
+			brightnessShader->use();
 
 			glBindVertexArray(rectVAO);
 			glDisable(GL_DEPTH_TEST); // prevents framebuffer rectangle from being discarded
@@ -304,7 +315,7 @@ int main(int argc, char** argv)
 			glEnable(GL_CULL_FACE);
 		}
 		
-		// Clean-up
+		// cleanup
 		glDeleteFramebuffers(1, &fbo);
 		destroyFramework();
 		glfwDestroyWindow(window);
@@ -374,7 +385,6 @@ void createFramebuffer(int width, int height, uint32_t& framebufferID, uint32_t&
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorAttachmentID, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthAttachmentID, 0);
 
-
 	// Error checking framebuffer
 	auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
@@ -403,15 +413,9 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	_zoom -= float(yoffset) * 0.5f;
 }
 
-void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
-	std::shared_ptr<BaseMaterial> material, GamePhysx physx) {
+void generateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, std::shared_ptr<BaseMaterial> material, GamePhysx physx) {
 	std::vector<string> treeModelPaths = { "assets/models/Lowpoly_tree_sample.obj", "assets/models/Lowpoly_tree_sample2.obj", "assets/models/sphere.obj" };
 
-	//create advanced random values for x and y
-	std::random_device dev;
-	std::mt19937 rng(dev());
-	std::uniform_int_distribution<std::mt19937::result_type> distX(min.x, max.x); // distribution in range [minX, maxX]
-	std::uniform_int_distribution<std::mt19937::result_type> distZ(min.y, max.y); // distribution in range [minY, maxY]
 	float positions[] = {-60,10,-60,50,-25,70,-20,10,-50,-80,15,-75,45,-80,90,-75,80,-55,55,-45,30,-30,80,-30,65,0,90,15,45,10,15,25,25,50,5,-45};
 	for (uint32_t i = 0; i < count; ++i) {
 		std::string n = "tree: " + std::to_string(i);
@@ -420,15 +424,8 @@ void GenerateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMul
 	}
 }
 
-void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, float randomMultiplier,
-	std::shared_ptr<BaseMaterial> material, GamePhysx physx) {
+void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, std::shared_ptr<BaseMaterial> material, GamePhysx physx) {
 	std::vector<string> flowerModelPaths = { "assets/models/Flower_Test.obj", "assets/models/Flower_Test_LOD1.obj", "assets/models/sphere.obj" };
-
-	//create advanced random values for x and y
-	std::random_device dev;
-	std::mt19937 rng(dev());
-	std::uniform_int_distribution<std::mt19937::result_type> distX(min.x, max.x); // distribution in range [minX, maxX]
-	std::uniform_int_distribution<std::mt19937::result_type> distZ(min.y, max.y); // distribution in range [minY, maxY]
 
 	float positions[] = {-65,-80,-40,-80,-15,-80,-25,-60,-50,-65,-70,-65,-60,-50,-35,-45,-50,-35,-65,-30,-15,-30,-35,-5,0,-30,0,-10,30,-15,50,-55,95,-40,65,-10,0,10,-30,20,-65,30,-60,65,-30,50,20,10,45,30,20,35,10,60,25,75,30,35,40,55,80,25,85,45,90,70,60,55,70,65,50,75,75,80};
 	for (uint32_t i = 0; i < count; ++i) {

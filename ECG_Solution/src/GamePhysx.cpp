@@ -25,8 +25,6 @@ physx::PxFilterFlags contactFilter(
 	return physx::PxFilterFlag::eDEFAULT;
 }
 
-
-
 GamePhysx::GamePhysx() {
 	init();
 }
@@ -35,11 +33,11 @@ GamePhysx::~GamePhysx() {
 
 }
 
-physx::PxFoundation* GamePhysx::getFoundation() const { return gFoundation; }
-physx::PxPhysics* 	 GamePhysx::getPhysics() const { return gPhysics; }
-physx::PxScene* 	 GamePhysx::getScene() const { return gScene; }
-physx::PxMaterial* 	 GamePhysx::getMaterial() const { return gMaterial; }
-physx::PxCooking* 	 GamePhysx::getCooking() const { return gCooking; }
+physx::PxFoundation* GamePhysx::getFoundation() { return gFoundation; }
+physx::PxPhysics* 	 GamePhysx::getPhysics() { return gPhysics; }
+physx::PxScene* 	 GamePhysx::getScene() { return gScene; }
+physx::PxMaterial* 	 GamePhysx::getMaterial() { return gMaterial; }
+physx::PxCooking* 	 GamePhysx::getCooking() { return gCooking; }
 
 
 void GamePhysx::init() {

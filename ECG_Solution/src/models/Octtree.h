@@ -1,17 +1,15 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <GL\glew.h>
 #include <cstdint>
 #include <vector>
 #include <memory>
-#include <glm\glm.hpp>
-#include <GL\glew.h>
 #include <sstream>
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <map>
-
 #include "../OcttreeNode.h"
 
 

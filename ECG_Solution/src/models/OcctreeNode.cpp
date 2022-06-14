@@ -1,9 +1,13 @@
-#include "OcttreeNode.h"
+#include "../OcttreeNode.h"
 
 OcttreeNode::OcttreeNode(LODModel lodModels)
     : _lodModels(lodModels)
 {
     _position = lodModels.getActiveModel()->getPosition();
+}
+
+OcttreeNode::OcttreeNode()
+{
 }
 
 OcttreeNode::~OcttreeNode()

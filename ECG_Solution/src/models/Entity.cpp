@@ -51,21 +51,14 @@ PhysxEntity::PhysxEntity(GamePhysx& physx, std::shared_ptr<Model> model)
 {
 }
 
-/*PhysxEntity::~PhysxEntity()
+PhysxEntity::~PhysxEntity()
 {
-    if (_actor != nullptr && _actor->isReleasable())
-    {
-        // TODO check if stupid
-        _physx.getScene()->removeActor(*_actor);
-        _actor->release();
-    }
-}*/
+}
 
 void PhysxDynamicEntity::setGlobalPose(glm::mat4 transform)
 {
     physx::PxMat44 mat;
     glmMat4ToPhysxMat4(transform, mat);
-
     _actor->setGlobalPose(physx::PxTransform(mat));
 }
 
@@ -73,7 +66,6 @@ void PhysxDynamicEntity::draw(Camera& camera, DirectionalLight& dirL)
 {
     glm::mat4 modelMatrix;
     physXMat4ToGlmMat4(_actor->getGlobalPose(), modelMatrix);
-
     _model->draw(modelMatrix, camera, dirL);
 }
 
@@ -81,17 +73,9 @@ PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& gphysx, std::shared_ptr<Model>
     : PhysxEntity(gphysx, model)
 {
     physx::PxRigidDynamic* actor = gphysx.getPhysics()->createRigidDynamic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
-
-    physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*actor, physx::PxCapsuleGeometry(1, 2), *gphysx.getMaterial());
-
-    physx::PxQuat(1.570796, physx::PxVec3(0.0, 1.0, 0.0));
-    aBoxShape->setLocalPose(physx::PxTransform(physx::PxQuat(1.570796, physx::PxVec3(0.0, 1.0, 0.0))));
-
-  
     actor->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
     _actor = actor;
     _actor->setName("Player");
-
     gphysx.getScene()->addActor(*_actor);
 }
 
@@ -100,7 +84,6 @@ glm::vec3 PhysxDynamicEntity::getPosition()
     auto pos = _actor->getGlobalPose().p;
     return glm::vec3(pos.x, pos.y, pos.z);
 }
-
 
 PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, std::shared_ptr<Model> model, bool flower, objType type = objType::Default)
     : PhysxEntity(gphysx, model)
@@ -166,56 +149,62 @@ PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, std::shared_ptr<Model> m
         rbStatic->attachShape(*leavesSmall);
         rbStatic->attachShape(*leavesLarge2);
         rbStatic->attachShape(*leavesMedium2);
-    }
-            break;
+        }
+        break;
 
-    case objType::Flower: {
+    case objType::Flower: 
+        {
         rbStatic->setName("flower");
         physx::PxShape* stem = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxBoxGeometry(0.5, 8, 0.5), *gphysx.getMaterial());
         physx::PxShape* base = gphysx.getPhysics()->createShape(physx::PxBoxGeometry(3.5, 0.2, 3.5), *gphysx.getMaterial(), true);
         base->setLocalPose(physx::PxTransform(physx::PxVec3(0.0, 8.1, 0.0)));
+        
         physx::PxShape* blossom = gphysx.getPhysics()->createShape(physx::PxCapsuleGeometry(1, 1.5), *gphysx.getMaterial(), true);
         physx::PxTransform blossomTrans;
         blossomTrans.p = physx::PxVec3(0.0, 8.5, 0.0);
         blossomTrans.q = physx::PxQuat(1.570796, physx::PxVec3(0.0, 0.0, 1.0));
         blossom->setLocalPose(blossomTrans);
-        //blossom->setLocalPose(physx::PxTransform(physx::PxVec3(0.0, 8.5, 0.0)));
-        //physx::PxShape* shape = physx.gPhysics->createShape(physx::PxSphereGeometry(1.0f), *physx.getMaterial(), true);
+        
         rbStatic->attachShape(*base);
         rbStatic->attachShape(*blossom);
-    }
-            break;
+        }
+        break;
+
     case objType::Ground: {
         rbStatic->setName("ground");
-    }
+        }
         break;
-    case objType::Default:{rbStatic->setName("default"); }
+
+    case objType::Default:{
+        rbStatic->setName("default"); 
+        }
         break;
+
     case objType::Stump:{
         rbStatic->setName("stump");
         physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxBoxGeometry(3.5, 3.7, 3.5), *gphysx.getMaterial());
-      
-    }
+        }
         break;
-
     }
-
-
-
+    
+    /* // dynamic mesh cooking
+    physx::PxTriangleMeshCookingResult::Enum result;
+    auto pxMesh = model->getMeshes()->at(i)->createPxMesh(gphysx);
+    physx::PxMeshScale scale( physx::PxVec3(1,1,1),  physx::PxQuat(physx::PxIdentity));
+    physx::PxTriangleMeshGeometry geom(pxMesh, scale);
+    physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, geom ,*gphysx.getMaterial());
+    */
 
     rbStatic->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
     _actor = rbStatic;
-
     gphysx.getScene()->addActor(*_actor);
-
-    std::cout << _actor->getName() << std::endl;
+    std::cout << "Init:" << _actor->getName() << ", ";
 }
 
 void PhysxStaticEntity::draw(Camera& camera, DirectionalLight& dirL)
 {
     glm::mat4 modelMatrix;
     physXMat4ToGlmMat4(_actor->getGlobalPose(), modelMatrix);
-
     _model->draw(modelMatrix, camera, dirL);
 }
 
@@ -223,7 +212,6 @@ void PhysxStaticEntity::setGlobalPose(glm::mat4 transform)
 {
     physx::PxMat44 mat;
     glmMat4ToPhysxMat4(transform, mat);
-
     _actor->setGlobalPose(physx::PxTransform(mat));
 }
 

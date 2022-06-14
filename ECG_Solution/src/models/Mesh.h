@@ -6,7 +6,6 @@
 #include <glm\glm.hpp>
 #include <GL\glew.h>
 #include "../GamePhysx.h"
-
 #include "../rendering/Camera.h"
 #include "../rendering/Material.h"
 

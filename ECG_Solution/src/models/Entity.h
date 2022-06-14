@@ -1,10 +1,9 @@
 #pragma once
 
 #include <glm/glm.hpp>
-
 #include "../GamePhysx.h"
-#include "Model.h"
 #include "../rendering/Camera.h"
+#include "Model.h"
 
 
 enum class objType { Tree, Flower, Stump, Bee, Ground, Default }; //used for generating appropriate physx actor
@@ -12,14 +11,12 @@ enum class objType { Tree, Flower, Stump, Bee, Ground, Default }; //used for gen
 class PhysxEntity
 {
 protected:
-  
     std::shared_ptr<Model> _model;
     GamePhysx& _physx;
 
 public:
     PhysxEntity(GamePhysx& physx, std::shared_ptr<Model> model);
-    //~PhysxEntity();
-
+    ~PhysxEntity();
 };
   
 class PhysxDynamicEntity : public PhysxEntity

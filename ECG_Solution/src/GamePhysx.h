@@ -1,17 +1,16 @@
 #pragma once
 
 #include <cstdio>
-
+#include <iostream>
 #include <PxPhysicsAPI.h>
-#include <geometry/PxGeometry.h>
-#include <geometry/PxBoxGeometry.h>
+#include <PxActor.h>
 #include <PxRigidActor.h>
 #include <PxRigidDynamic.h>
 #include <PxRigidStatic.h>
+#include <geometry/PxGeometry.h>
+#include <geometry/PxBoxGeometry.h>
 #include <foundation/PxTransform.h>
 #include <foundation/PxVec3.h>
-#include <PxActor.h>
-#include <iostream>
 
 class GamePhysxCallback : public physx::PxSimulationEventCallback {
 
@@ -40,11 +39,11 @@ public:
 	GamePhysx();
 	~GamePhysx();
 
-	physx::PxFoundation* getFoundation() const;
-	physx::PxPhysics* getPhysics() const;
-	physx::PxScene* getScene() const;
-	physx::PxMaterial* getMaterial() const;
-	physx::PxCooking* getCooking() const;
+	physx::PxFoundation* getFoundation();
+	physx::PxPhysics* getPhysics();
+	physx::PxScene* getScene();
+	physx::PxMaterial* getMaterial();
+	physx::PxCooking* getCooking();
 	GamePhysxCallback callback;
 
 private:

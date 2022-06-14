@@ -53,7 +53,6 @@ Mesh::~Mesh()
 void Mesh::draw(glm::mat4 modelMatrix, Camera& camera)
 {
     glBindVertexArray(_vaoID);
-
     glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
 }
 
@@ -68,7 +67,7 @@ physx::PxTriangleMesh* Mesh::createPxMesh(GamePhysx& gphysx)
     meshDesc.triangles.stride       = 3*sizeof(physx::PxU32);
     meshDesc.triangles.data         = _indices.data();
 
-    
+
     physx::PxDefaultMemoryOutputStream writeBuffer;
     bool status = gphysx.getCooking()->cookTriangleMesh(meshDesc, writeBuffer);
     if(!status)

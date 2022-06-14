@@ -5,7 +5,6 @@
 */
 #pragma once
 
-#include "INIReader.h"
 #include <iostream>
 #include <Windows.h>
 #include <memory>
@@ -13,14 +12,15 @@
 #include <GLFW\glfw3.h>
 #include <glm\gtc\matrix_transform.hpp>
 #include <glm\glm.hpp>
+#include "INIReader.h"
 
 #define EXIT_WITH_ERROR(err) \
-        { \
-                glfwTerminate(); \
-                std::cout << "ERROR: " << err << std::endl; \
-                system("PAUSE"); \
-                return EXIT_FAILURE; \
-        }
+    { \
+            glfwTerminate(); \
+            std::cout << "ERROR: " << err << std::endl; \
+            system("PAUSE"); \
+            return EXIT_FAILURE; \
+    }
 
 
 #define FOURCC_DXT1	MAKEFOURCC('D', 'X', 'T', '1')

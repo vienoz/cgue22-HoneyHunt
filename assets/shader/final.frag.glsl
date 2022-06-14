@@ -5,6 +5,7 @@ in vec2 texCoords;
 
 layout(binding = 0) uniform sampler2D screenTexture;
 layout(binding = 1) uniform sampler2D brightnessTexture;
+layout(binding = 2) uniform float brightnessMultiplier;
 
 uniform float weight[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
 

@@ -73,6 +73,11 @@ PhysxDynamicEntity::PhysxDynamicEntity(GamePhysx& gphysx, std::shared_ptr<Model>
     : PhysxEntity(gphysx, model)
 {
     physx::PxRigidDynamic* actor = gphysx.getPhysics()->createRigidDynamic(physx::PxTransform(physx::PxVec3(0.f, 0.f, 0.f)));
+
+    physx::PxShape* playerShape = physx::PxRigidActorExt::createExclusiveShape(*actor, physx::PxCapsuleGeometry(1, 2), *gphysx.getMaterial());
+    physx::PxQuat(1.570796, physx::PxVec3(0.0, 1.0, 0.0));
+    playerShape->setLocalPose(physx::PxTransform(physx::PxQuat(1.570796, physx::PxVec3(0.0, 1.0, 0.0))));
+
     actor->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
     _actor = actor;
     _actor->setName("Player");

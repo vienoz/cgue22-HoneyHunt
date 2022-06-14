@@ -275,10 +275,8 @@ int main(int argc, char** argv)
 			if (physx.callback.collisionObj != NULL) {
 				int n = 0;
 				for (auto const& value : collisionStatics) {
-					//if callback actor is same as current actor
 					if (value->flowerToBeVisited == true && value->getRigidStatic() == physx.callback.collisionObj) {
 						physx::PxShape* temp;
-						//compare if collision is between shapes at indeces two
 						value->getRigidStatic()->getShapes(&temp, 1, 2);
 						if (temp == physx.callback.collisionShapes) {
 							counter++;

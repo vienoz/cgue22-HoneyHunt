@@ -41,7 +41,6 @@ physx::PxCooking* 	 GamePhysx::getCooking() { return gCooking; }
 
 
 void GamePhysx::init() {
-	//init physx
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 	if (!gFoundation) throw ("failed to create PxCreateFoundation");
 
@@ -53,9 +52,9 @@ void GamePhysx::init() {
 	//if (!gCooking) throw ("PxCreateCooking failed!");
 
 	// for visual debugger?
-	//gPvd = PxCreatePvd(*gFoundation);
-	//physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
-	//gPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
+	gPvd = PxCreatePvd(*gFoundation);
+	physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
+	gPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
 
 	//create physics
 	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, physx::PxTolerancesScale(scale), true, gPvd);
@@ -74,7 +73,7 @@ void GamePhysx::init() {
 
 	gScene = gPhysics->createScene(sceneDesc);
 
-	/*
+	
 	//scene client, aslo for debugger
 	physx::PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
 	if (pvdClient)
@@ -82,7 +81,7 @@ void GamePhysx::init() {
 		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
 		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
 		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
-	}*/
+	}
 
 	//create body 
 	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);

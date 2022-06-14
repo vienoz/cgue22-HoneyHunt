@@ -17,22 +17,22 @@ class Octtree
 {
 
 protected:
-    float _LOD_distance_1 = 40.0f;
-    float _LOD_distance_2 = 80.0f;
+    float _lod_distance_min;
+    float _lod_distance_max;
 
     std::vector<OcttreeNode> _nodes;
     std::vector<Octtree> _subtrees;
     glm::vec3 _maxDimension;
     glm::vec3 _origin;
-    int _capacity;
+    int _capacity; // maximum content nodes (low value -> higher division -> higher lod accuracy)
     int _index;
-    bool _hasDivided;
+    bool _hasDivided; // false as leaf node
 
 
 public:
     static bool IsLodActive;
 
-    Octtree(glm::vec3 origin, glm::vec3 maxDimension, int capacity);
+    Octtree(glm::vec3 origin, glm::vec3 maxDimension, int capacity, float lod_distance_min, float lod_distance_max);
     Octtree();
     virtual ~Octtree();
 

@@ -86,14 +86,16 @@ int main(int argc, char** argv)
 	INIReader reader("assets/settings.ini");
 
 	std::string window_title = reader.Get("window", "title", "HoneyHero");
-	int window_width =	reader.GetInteger("window", "width", 800);
-	int window_height = reader.GetInteger("window", "height", 800);
-	int refresh_rate =	reader.GetInteger("window", "refresh_rate", 60);
-	bool fullscreen =	reader.GetBoolean("window", "fullscreen", false);
-	float fov =	  	   float(reader.GetReal("camera", "fov", 60.0f));
-	float nearZ = 	   float(reader.GetReal("camera", "near", 0.1f));
-	float farZ =  	   float(reader.GetReal("camera", "far", 1000.0f));
-	float brightness = float(reader.GetReal("shading", "brightness", 1.0f));
+	int window_width =	 reader.GetInteger("window", "width", 800);
+	int window_height =  reader.GetInteger("window", "height", 800);
+	int refresh_rate =	 reader.GetInteger("window", "refresh_rate", 60);
+	bool fullscreen =	 reader.GetBoolean("window", "fullscreen", false);
+	float fov =	  	     float(reader.GetReal("camera", "fov", 60.0f));
+	float nearZ = 	     float(reader.GetReal("camera", "near", 0.1f));
+	float farZ =  	     float(reader.GetReal("camera", "far", 1000.0f));
+	float brightness =   float(reader.GetReal("rendering", "brightness", 1.0f));
+	float lodLevelMin =  float(reader.GetReal("rendering", "lod_distance_min", 1.0f));
+	float lodLevelMax =  float(reader.GetReal("rendering", "lod_distance_max", 1.0f));
 
 
 	// Create context
@@ -167,7 +169,7 @@ int main(int argc, char** argv)
 		auto finalShader =       AssetManager::getInstance()->getShader("assets/shader/final");
 		text.setUpShader(		 AssetManager::getInstance()->getShader("assets/shader/textShader"));
 		
-		brightnessShader->setUniform(2, brightness);
+		brightnessShader->setUniform(0, brightness);
 
 		std::shared_ptr<BaseMaterial> playerMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
 		std::shared_ptr<BaseMaterial> woodMaterial =	std::make_shared<BaseMaterial>(woodShader);
@@ -182,7 +184,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<PhysxStaticEntity> stumpEntity = InitStaticEntity("assets/models/treeStump.obj", woodMaterial, glm::mat4(1), glm::vec3(30, 0, 0), physx, false, objType::Stump);
 		
 		// ----------------------------init dynamic(LOD) models--------------
-		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4);		
+		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4, lodLevelMin, lodLevelMax);		
 		generateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), treeMaterial, physx);
 		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), flowerMaterial, physx);
 

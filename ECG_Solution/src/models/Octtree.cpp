@@ -2,8 +2,10 @@
 
 bool Octtree::IsLodActive = true;
 
-Octtree::Octtree(glm::vec3 origin, glm::vec3 maxDimension, int capacity)
+Octtree::Octtree(glm::vec3 origin, glm::vec3 maxDimension, int capacity, float lod_distance_min, float lod_distance_max)
 {
+    _lod_distance_min = lod_distance_min;
+    _lod_distance_max = lod_distance_max;
     _maxDimension = maxDimension;
     _capacity = capacity;
     _origin = origin;
@@ -30,10 +32,8 @@ void Octtree::insert(OcttreeNode node) {
     {
         if (!_hasDivided) 
             subdivide();
-
-        for (auto& subtree : _subtrees) {
+        for (auto& subtree : _subtrees)
             subtree.insert(node);
-        }
     }
 }
 
@@ -43,31 +43,30 @@ void Octtree::subdivide() {
     float offsetZ = _maxDimension.z / 2;
     glm::vec3 newDimension = glm::vec3(offsetX, offsetY, offsetZ);
     _hasDivided = true;
-    glm::vec3 newOrigin; // right = +x, up = +y, forward = +z
+    glm::vec3 newOrigin; // grid: right = +x, up = +y, forward = +z
 
     // cube dimension calculations
     newOrigin = glm::vec3(_origin.x + offsetX, _origin.y - offsetY, _origin.z + offsetZ);
-    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity));
+    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity, _lod_distance_min, _lod_distance_max));
     newOrigin = glm::vec3(_origin.x - offsetX, _origin.y - offsetY, _origin.z + offsetZ);
-    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity));
+    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity, _lod_distance_min, _lod_distance_max));
     newOrigin = glm::vec3(_origin.x + offsetX, _origin.y - offsetY, _origin.z - offsetZ);
-    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity));
+    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity, _lod_distance_min, _lod_distance_max));
     newOrigin = glm::vec3(_origin.x - offsetX, _origin.y - offsetY, _origin.z - offsetZ);
-    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity));
+    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity, _lod_distance_min, _lod_distance_max));
     newOrigin = glm::vec3(_origin.x + offsetX, _origin.y + offsetY, _origin.z + offsetZ);
-    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity));
+    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity, _lod_distance_min, _lod_distance_max));
     newOrigin = glm::vec3(_origin.x - offsetX, _origin.y + offsetY, _origin.z + offsetZ);
-    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity));
+    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity, _lod_distance_min, _lod_distance_max));
     newOrigin = glm::vec3(_origin.x + offsetX, _origin.y + offsetY, _origin.z - offsetZ);
-    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity));
+    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity, _lod_distance_min, _lod_distance_max));
     newOrigin = glm::vec3(_origin.x - offsetX, _origin.y + offsetY, _origin.z - offsetZ);
-    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity));
+    _subtrees.push_back(Octtree(newOrigin, newDimension, _capacity, _lod_distance_min, _lod_distance_max));
 
+    //pass node to children
     for (auto& node: _nodes)
-        for (auto& subtree : _subtrees) {
+        for (auto& subtree : _subtrees) 
             subtree.insert(node);
-        }
-
 }
 
 bool Octtree::contains(glm::vec3 point) {
@@ -104,9 +103,9 @@ void Octtree::draw(Camera& camera, DirectionalLight& dirL) {
 void Octtree::setLodIDs(glm::vec3 playerPosition) {
     if (!_hasDivided) {
         int id;
-        if (glm::distance(_origin, playerPosition) < _LOD_distance_1)
+        if (glm::distance(_origin, playerPosition) < _lod_distance_min)
             id = 0;
-        else if (glm::distance(_origin, playerPosition) < _LOD_distance_2)
+        else if (glm::distance(_origin, playerPosition) < _lod_distance_max)
             id = 1;
         else
             id = 2;

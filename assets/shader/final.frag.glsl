@@ -16,15 +16,15 @@ vec3 blurHorizontal(sampler2D tex, vec2 uv){
     
     
     float intensity = 1.5;
-    for(int i = 1; i < 15; ++i)
+    for(int i = 1; i < 10; ++i)
     {
-        result += texture(tex, uv + vec2(tex_offset.x * i * intensity, 0.0)).rgb * weight[i/3];
-        result += texture(tex, uv - vec2(tex_offset.x * i * intensity, 0.0)).rgb * weight[i/3];
+        result += texture(tex, uv + vec2(tex_offset.x * i * intensity, 0.0)).rgb * weight[i/2];
+        result += texture(tex, uv - vec2(tex_offset.x * i * intensity, 0.0)).rgb * weight[i/2];
     }
-    for(int i = 1; i < 15; ++i)
+    for(int i = 1; i < 10; ++i)
     {
-        result += texture(tex, uv + vec2(0.0, tex_offset.y * i * intensity)).rgb * weight[i/3];
-        result += texture(tex, uv - vec2(0.0, tex_offset.y * i * intensity)).rgb * weight[i/3];
+        result += texture(tex, uv + vec2(0.0, tex_offset.y * i * intensity)).rgb * weight[i/2];
+        result += texture(tex, uv - vec2(0.0, tex_offset.y * i * intensity)).rgb * weight[i/2];
     }
 
     return result;
@@ -36,5 +36,6 @@ void main(){
     
     float emissionMultiplier = 0.6;
     FragColor = sceneColor + vec4(highlightColor, 0) * emissionMultiplier;
+    //FragColor = vec4(highlightColor, 1) * emissionMultiplier; //debug highlight shader solo
 }
 

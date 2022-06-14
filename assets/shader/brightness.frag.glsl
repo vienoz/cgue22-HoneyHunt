@@ -8,9 +8,9 @@ layout(binding = 0) uniform sampler2D screenTexture;
 void main()
 {
     vec4 color = texture(screenTexture, texCoords);
-    float brightness = color.r * 0.2126 + color.g *  0.7152 + color.b * 0.0722;
+    float brightness = color.r * 0.2126 + color.g *  0.6152 + color.b * 0.0722;
     
-    if (brightness > 0.6)
+    if (brightness > 0.7)
         oColor = color * brightness; 
     else
         oColor = vec4(0, 0, 0, 1);

@@ -168,7 +168,8 @@ int main(int argc, char** argv)
 		auto finalShader =       AssetManager::getInstance()->getShader("assets/shader/final");
 		text.setUpShader(		 AssetManager::getInstance()->getShader("assets/shader/textShader"));
 		
-		brightnessShader->setUniform(0, brightness);
+		finalShader->use();
+		finalShader->setUniform(0, brightness);
 
 		std::shared_ptr<BaseMaterial> playerMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
 		std::shared_ptr<BaseMaterial> woodMaterial =	std::make_shared<BaseMaterial>(woodShader);

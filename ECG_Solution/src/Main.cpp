@@ -47,7 +47,7 @@ std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::sha
 void generateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, std::shared_ptr<BaseMaterial> material, GamePhysx physx);
 void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, std::shared_ptr<BaseMaterial> material, GamePhysx physx);
 void createFramebuffer(int width, int height, uint32_t& framebufferID, uint32_t& colorAttachmentID, uint32_t& depthAttachmentID);
-
+void updatePowerUpPosition(std::shared_ptr<PhysxStaticEntity> entity, float dx);
 bool interact();
 
 
@@ -303,7 +303,8 @@ int main(int argc, char** argv)
 			}
 			else {
 				powerUpEntity->draw(camera, dirL);
-				//update powerup position
+				updatePowerUpPosition(powerUpEntity, timePassed);
+			
 			}
 
 			if (boostCountdown > 0) {
@@ -672,4 +673,9 @@ glm::vec3 updateMovement(float dt) {
 
 bool interact() {
 	return keys[GLFW_KEY_E];
+}
+
+void updatePowerUpPosition(std::shared_ptr<PhysxStaticEntity> entity, float tx) {
+	physx::PxVec3 pos= entity->_rigidStatic->getGlobalPose().p;
+	entity->_rigidStatic->setGlobalPose(physx::PxTransform(physx::PxVec3(pos.x, 4*(sin(tx))+10, pos.z)));
 }

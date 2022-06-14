@@ -196,15 +196,15 @@ PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, std::shared_ptr<Model> m
     */
 
     rbStatic->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
-    _actor = rbStatic;
-    gphysx.getScene()->addActor(*_actor);
-    std::cout << "Init:" << _actor->getName() << ", ";
+    _rigidStatic = rbStatic;
+    gphysx.getScene()->addActor(*_rigidStatic);
+    std::cout << "Init:" << _rigidStatic->getName() << ", ";
 }
 
 void PhysxStaticEntity::draw(Camera& camera, DirectionalLight& dirL)
 {
     glm::mat4 modelMatrix;
-    physXMat4ToGlmMat4(_actor->getGlobalPose(), modelMatrix);
+    physXMat4ToGlmMat4(_rigidStatic->getGlobalPose(), modelMatrix);
     _model->draw(modelMatrix, camera, dirL);
 }
 
@@ -212,11 +212,11 @@ void PhysxStaticEntity::setGlobalPose(glm::mat4 transform)
 {
     physx::PxMat44 mat;
     glmMat4ToPhysxMat4(transform, mat);
-    _actor->setGlobalPose(physx::PxTransform(mat));
+    _rigidStatic->setGlobalPose(physx::PxTransform(mat));
 }
 
 glm::vec3 PhysxStaticEntity::getPosition()
 {
-    auto pos = _actor->getGlobalPose().p;
+    auto pos = _rigidStatic->getGlobalPose().p;
     return glm::vec3(pos.x, pos.y, pos.z);
 }

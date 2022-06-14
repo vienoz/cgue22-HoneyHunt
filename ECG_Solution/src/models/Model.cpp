@@ -105,27 +105,6 @@ std::shared_ptr<std::vector<Mesh*> > Model::getMeshes()
     return std::make_shared<std::vector<Mesh*> >(_meshes);
 }
 
-/*
-if (mesh->mMaterialIndex >= 0)
-    {
-        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        std::vector<std::shared_ptr<Texture> > diffuseMaps = loadMaterialTextures(material,
-                                            aiTextureType_DIFFUSE, "texture_diffuse");
-
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        std::vector<std::shared_ptr<Texture> > specularMaps = loadMaterialTextures(material,
-                                            aiTextureType_SPECULAR, "texture_specular");
-        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-
-        if (textures.size() > 0)
-            ownMaterial = std::make_shared<TextureMaterial>(shader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, textures[0]);
-        else
-            ownMaterial = AssetManager::getInstance()->defaultMaterial;
-    }
-    else
-        ownMaterial = AssetManager::getInstance()->defaultMaterial;
-*/
-
 void Model::draw(glm::mat4 modelMatrix, Camera& camera, DirectionalLight& dirL)
 {
     _material->getShader()->use();

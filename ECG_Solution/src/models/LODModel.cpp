@@ -40,6 +40,22 @@ void LODModel::draw(Camera& camera, DirectionalLight& dirL, uint32_t id) {
 
 void LODModel::setLodID(int id) {
 	_id = id;
+	/*
+	for (uint32_t level = 0; level < _models.size(); ++level) {
+		auto actor = _models[level]->getRigidStatic();
+		const physx::PxU32 numShapes = actor->getNbShapes();		
+		
+		physx::PxShape** shapes;
+		shapes = new physx::PxShape * [numShapes];
+		actor->getShapes(shapes, numShapes);
+
+		for (physx::PxU32 i = 0; i < numShapes; i++)
+		{
+			physx::PxShape* shape = shapes[i];
+			shape->setFlag(physx::PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+		}	
+	}
+	*/
 }
 
 void LODModel::addModel(std::shared_ptr<PhysxStaticEntity> model) {

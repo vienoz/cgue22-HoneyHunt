@@ -79,6 +79,7 @@ std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
 std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
 
 bool hud = true;
+std::clock_t gameOverTime;
 
 
 /* --------------------------------------------- */
@@ -93,6 +94,7 @@ int main(int argc, char** argv)
 	int window_width =	 reader.GetInteger("window", "width", 800);
 	int window_height =  reader.GetInteger("window", "height", 800);
 	int refresh_rate =	 reader.GetInteger("window", "refresh_rate", 60);
+	std::clock_t gameOverTime = reader.GetInteger("game", "time", 45);
 	bool fullscreen =	 reader.GetBoolean("window", "fullscreen", false);
 	float fov =	  	     float(reader.GetReal("camera", "fov", 60.0f));
 	float nearZ = 	     float(reader.GetReal("camera", "near", 0.1f));
@@ -230,7 +232,6 @@ int main(int argc, char** argv)
 		double mouse_x, mouse_y;
 		bool gameOver = false;
 
-		std::clock_t gameOverTime = 60;
 		bool insideCollShape = false;
 		physx::PxShape* temp;
 		std::shared_ptr<PhysxStaticEntity> latestCollision;

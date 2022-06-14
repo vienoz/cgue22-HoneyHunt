@@ -134,7 +134,6 @@ int main(int argc, char** argv)
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); //get callback direct after error
 	}
 
-
 	if (!initFramework()) EXIT_WITH_ERROR("Failed to init framework");
 
 	// set callbacks
@@ -173,7 +172,7 @@ int main(int argc, char** argv)
 
 		std::shared_ptr<BaseMaterial> playerMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
 		std::shared_ptr<BaseMaterial> woodMaterial =	std::make_shared<BaseMaterial>(woodShader);
-		std::shared_ptr<BaseMaterial> groundMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/ground_texture.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
+		std::shared_ptr<BaseMaterial> groundMaterial =	std::make_shared<TextureMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/ground_texture.dds"));
 		std::shared_ptr<BaseMaterial> flowerMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/flower_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<BaseMaterial> treeMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/tree_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		auto defaultMaterial =	 AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
@@ -193,7 +192,7 @@ int main(int argc, char** argv)
 		
 		// ----------------------------init scene----------------------------
 		camera = Camera(fov, float(window_width) / float(window_height), nearZ, farZ, glm::vec3(0.0, 0.0, 7.0), glm::vec3(0.0, 1.0, 0.0));
-		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
+		DirectionalLight dirL(glm::vec3(0.6f), glm::vec3(0.0f, -1.0f, -1.0f));
 
 		//--------------------frame buffers (post processing)------------------------
 		// Prepare framebuffer rectangle VBO and VAO
@@ -276,10 +275,10 @@ int main(int argc, char** argv)
 				int n = 0;
 				for (auto const& value : collisionStatics) {
 					//if callback actor is same as current actor
-					if (value->flowerToBeVisited == true && value->getPhysxActor() == physx.callback.collisionObj) {
+					if (value->flowerToBeVisited == true && value->getRigidStatic() == physx.callback.collisionObj) {
 						physx::PxShape* temp;
 						//compare if collision is between shapes at indeces two
-						value->getPhysxActor()->getShapes(&temp, 1, 2);
+						value->getRigidStatic()->getShapes(&temp, 1, 2);
 						if (temp == physx.callback.collisionShapes) {
 							counter++;
 							value->flowerToBeVisited = false;

@@ -40,14 +40,14 @@ public:
 class PhysxStaticEntity : public PhysxEntity {
 public: 
     bool flowerToBeVisited;
-    physx::PxRigidStatic* _actor;
+    physx::PxRigidStatic* _rigidStatic;
     virtual void draw(Camera& camera, DirectionalLight& dirL);
     virtual void setGlobalPose(glm::mat4 transform);
     virtual glm::vec3 getPosition();
 
-    physx::PxRigidStatic* getPhysxActor()
+    physx::PxRigidStatic* getRigidStatic()
     {
-        return _actor;
+        return _rigidStatic;
     }
 
     PhysxStaticEntity(GamePhysx& physx, std::shared_ptr<Model> model, bool flower, objType type);

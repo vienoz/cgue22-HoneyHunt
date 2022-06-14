@@ -1,11 +1,11 @@
 #version 430 core
 
-const vec3 color1 = vec3(0.54, 0.23, 0.11);
-const vec3 color2 = vec3(0.78, 0.54, 0.41);
-const float frequency = 2.0;
-const float noiseScale = 6.0;
-const float ringScale = 0.6;
-const float contrast = 4.0;
+const vec3 color1 = vec3(0.408, 0.259, 0.094);
+const vec3 color2 = vec3(0.783, 0.592, 0.416);
+const float frequency = 2.5;
+const float noiseScale = 0.5;
+const float ringScale = 0.7;
+const float contrast = 3.5;
 
 in VertexData {
 	vec3 position_world;
@@ -97,15 +97,17 @@ float snoise(vec3 v) {
     p3 *= norm.w;
 
     // Mix final noise value
-    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x2,x2), dot(x1,x1), dot(x3,x3)), 0.0);
     m = m * m;
-    return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),
-                dot(p2,x2), dot(p3,x3) ) );
+
+
+    return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p2,x2),
+                dot(p1,x1), dot(p3,x3) ) );
 }
 
 void main() {
     float n = snoise( vert.position_world );
-    float ring = fract( frequency * vert.position_world.z + noiseScale * n );
+    float ring = fract( frequency * vert.position_world.y + noiseScale * n );
     ring *= contrast * ( 1.0 - ring );
     
     // Adjust ring smoothness and shape, and add some noise

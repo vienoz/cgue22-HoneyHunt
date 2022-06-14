@@ -95,7 +95,8 @@ int main(int argc, char** argv)
 	float fov =	  	     float(reader.GetReal("camera", "fov", 60.0f));
 	float nearZ = 	     float(reader.GetReal("camera", "near", 0.1f));
 	float farZ =  	     float(reader.GetReal("camera", "far", 1000.0f));
-	float brightness =   float(reader.GetReal("rendering", "brightness", 1.0f));
+	float lightIntensity=   float(reader.GetReal("rendering", "lightIntensity", 0.6f));
+	float emissionIntensity =   float(reader.GetReal("rendering", "emissionIntensity", 0.1f));
 	float lodLevelMin =  float(reader.GetReal("rendering", "lod_distance_min", 1.0f));
 	float lodLevelMax =  float(reader.GetReal("rendering", "lod_distance_max", 1.0f));
 
@@ -171,7 +172,7 @@ int main(int argc, char** argv)
 		text.setUpShader(		 AssetManager::getInstance()->getShader("assets/shader/textShader"));
 		
 		finalShader->use();
-		finalShader->setUniform(0, brightness);
+		finalShader->setUniform(0, emissionIntensity);
 
 		std::shared_ptr<BaseMaterial> playerMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/bee.dds"), glm::vec3(0.1f, 0.7f, 0.3f), 1.0f);
 		std::shared_ptr<BaseMaterial> woodMaterial =	std::make_shared<BaseMaterial>(woodShader);

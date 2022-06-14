@@ -33,7 +33,7 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-glm::vec3 updateMovement();
+glm::vec3 updateMovement(float dt);
 
 LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, GamePhysx physx, bool flower, objType type);
@@ -256,7 +256,7 @@ int main(int argc, char** argv)
 			
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
-			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement());
+			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement(dt));
 
 
 			// draw persitent
@@ -604,36 +604,38 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 }
 
 //TODO: add slight pitch when moving forward, by adding quaternions?
-glm::vec3 updateMovement() {
+glm::vec3 updateMovement(float dt) {
 	glm::vec3 newDirection = glm::normalize(camera.getCameraFoward());
+	float mSpeed = dt * 500;
+	float mSpeedY = dt * 250;
 	
 	float playerDirection = atan2(newDirection.x , newDirection.z);
 	glm::vec2 cFoward = glm::normalize(glm::vec2(camera.getCameraFoward().x, camera.getCameraFoward().z));
 	glm::vec3 cRight = glm::normalize(camera.getCameraRight());
 
 	if (keys[GLFW_KEY_W]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(8*-cFoward.x, 0 ,8* -cFoward.y), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed *-cFoward.x, 0 , mSpeed * -cFoward.y), true);
 	}
 	if (keys[GLFW_KEY_A]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * -cRight.x, 6 * -cRight.y, 6 * -cRight.z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed * -cRight.x, mSpeed * -cRight.y, mSpeed * -cRight.z), true);
 	}
 	if (keys[GLFW_KEY_W] && keys[GLFW_KEY_A]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * (-cRight.x + -cFoward.x), 0, 6 * (-cRight.z + -cFoward.y)), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed * (-cRight.x + -cFoward.x), 0, mSpeed * (-cRight.z + -cFoward.y)), true);
 	}
 	if (keys[GLFW_KEY_S]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * cFoward.x, 0, 6 * cFoward.y), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed * cFoward.x, 0, mSpeed * cFoward.y), true);
 	}
 	if (keys[GLFW_KEY_D]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * cRight.x, 6 * cRight.y, 6 * cRight.z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed * cRight.x, mSpeed * cRight.y, mSpeed * cRight.z), true);
 	}
 	if (keys[GLFW_KEY_W] && keys[GLFW_KEY_D]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(6 * (cRight.x + -cFoward.x), 0, 6 * (cRight.z + -cFoward.y)), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed * (cRight.x + -cFoward.x), 0, mSpeed * (cRight.z + -cFoward.y)), true);
 	}
 	if (keys[GLFW_KEY_SPACE]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(playerEntity->getPhysxActor()->getLinearVelocity().x, 4.0, playerEntity->getPhysxActor()->getLinearVelocity().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(playerEntity->getPhysxActor()->getLinearVelocity().x, mSpeedY, playerEntity->getPhysxActor()->getLinearVelocity().z), true);
 	}
 	if (keys[GLFW_KEY_LEFT_SHIFT]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(playerEntity->getPhysxActor()->getLinearVelocity().x, -4.0, playerEntity->getPhysxActor()->getLinearVelocity().z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(playerEntity->getPhysxActor()->getLinearVelocity().x, -mSpeedY, playerEntity->getPhysxActor()->getLinearVelocity().z), true);
 	}
 
 	physx::PxVec3 position = playerEntity->getPhysxActor()->getGlobalPose().p;

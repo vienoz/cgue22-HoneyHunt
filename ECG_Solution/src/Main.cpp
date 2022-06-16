@@ -77,6 +77,7 @@ Octtree _octtree;
 std::shared_ptr<PhysxDynamicEntity> playerEntity;
 std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
 std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
+std::vector<std::vector<int> > powerUpPos = { {30,-40}, {-10,40}, {-55,-20}, {-55,20}, {60,-70}, {35,20}, {-45,-10}, {-35,-25} };
 
 bool hud = true;
 std::clock_t gameOverTime;
@@ -299,18 +300,22 @@ int main(int argc, char** argv)
 					latestCollision->flowerToBeVisited = false;
 				}
 			}
+			if (boostCountdown < 0) {
+				boostCountdown = 0;
+				uint16_t random = rand() % (8);
+				powerUpEntity->getRigidStatic()->setGlobalPose(physx::PxTransform(physx::PxVec3(powerUpPos[random][0], 0.0, powerUpPos[random][1])));
+			}
 
 			if (latestCollision !=NULL && latestCollision->objectType == objType::PowerUp) {
 				powerUpEntity->getRigidStatic()->setGlobalPose(physx::PxTransform(physx::PxVec3(0.0,-10.0,0.0)));
 				latestCollision = NULL;
+				insideCollShape = false;
 				boostCountdown = 20;
 			}
-			else {
+			if(boostCountdown == 0 && !gameOver){
 				powerUpEntity->draw(camera, dirL);
 				updatePowerUpPosition(powerUpEntity, timePassed);
-			
 			}
-
 			if (boostCountdown > 0) {
 				boostCountdown-= dt;
 				if (hud) text.drawText("boosted: " + std::to_string((int)boostCountdown), 550.0f, 25.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));

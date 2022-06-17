@@ -13,8 +13,8 @@ protected:
 	int particle_count;
 public:
 	std::shared_ptr<TextureMaterial> _material;
-	static const int max_particles = 100;
-	void init(std::shared_ptr<TextureMaterial> material);
+	int max_particles;
+	void init(std::shared_ptr<TextureMaterial> material, float maxPart);
 	void update(float* position_size_data, unsigned char* color_data, int pCount);
 	void draw(Camera camera);
 private:

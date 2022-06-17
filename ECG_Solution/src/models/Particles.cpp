@@ -2,8 +2,9 @@
 
 const float* ParticleHandler::vertex_buffer_data;
 
-void ParticleHandler::init(std::shared_ptr<TextureMaterial> material) {
+void ParticleHandler::init(std::shared_ptr<TextureMaterial> material, float maxPart) {
 	_material = material;
+	max_particles = maxPart;
 
 	const float buffer_data[] = { -0.5f, -0.5f, 0.0f,
 	 0.5f, -0.5f, 0.0f,
@@ -52,12 +53,13 @@ void ParticleHandler::draw(Camera camera) {
 	glEnableVertexAttribArray(0);
 
 	_material->getTexture()->bind(0);
+	_material->getShader()->setUniform(0, glm::ortho(0.0f, 800.0f, 0.0f, 600.0f));
 	_material->getShader()->setUniform(1, camera.getViewMatrix());
 	_material->getShader()->setUniform(2, camera.getProjMatrix());
 	_material->getShader()->setUniform(3, camera.getCameraRight());
-	_material->getShader()->setUniform(4, camera.getCameraFoward());
-
-	std::cout << _material->getTexture()->_texHandle << "\n";
+	//_material->getShader()->setUniform(4, camera.getCameraRight());
+	glm::vec3 camBack = glm::vec3(-camera.getCameraFoward().x, -camera.getCameraFoward().y, -camera.getCameraFoward().z);
+	_material->getShader()->setUniform(4, glm::normalize(glm::cross(camera.getCameraRight(), camBack)));
 
 	//glUniform1i(0, _material->getTexture()->_texHandle);
 

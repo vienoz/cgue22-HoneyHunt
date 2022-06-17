@@ -10,6 +10,7 @@ out vec2 UV;
 out vec4 particlecolor;
 
 // Values that stay constant for the whole mesh.^
+layout(location = 0) uniform mat4 modelMatrix;
 layout(location = 1) uniform mat4 viewMatrix;
 layout(location = 2) uniform mat4 projMatrix;
 layout(location = 3) uniform vec3 cameraRight;
@@ -22,11 +23,12 @@ void main()
 	
 	vec3 vertexPosition_worldspace = 
 		particleCenter_wordspace
-		+ cameraRight * squareVertices.x * particleSize
-		+ cameraUp * squareVertices.y * particleSize;
+		+ normalize(cameraRight) * squareVertices.x * particleSize
+		+ normalize(cameraUp) * squareVertices.y * particleSize;
 
+	vec4 pos = modelMatrix * vec4(particleCenter_wordspace, 1);
 	// Output position of the vertex
-	gl_Position = projMatrix * viewMatrix * vec4(vertexPosition_worldspace, 1.0f);
+	gl_Position = projMatrix * viewMatrix * vec4(vertexPosition_worldspace, 1);
 
 	// UV of the vertex. No special space for this one.
 	UV = squareVertices.xy + vec2(0.5, 0.5);

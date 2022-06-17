@@ -85,8 +85,8 @@ std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
 std::vector<std::vector<int> > powerUpPos = { {30,-40}, {-10,40}, {-55,-20}, {-55,20}, {60,-70}, {35,20}, {-45,-10}, {-35,-25} };
 
 //Particlestorm
-Particle particleConatainer[100];
-int maxParticles = 100;
+const int maxParticles = 1000;
+Particle particleConatainer[maxParticles];
 int LastUsedParticle = 0;
 ParticleHandler particles;
 static GLfloat* g_particule_position_size_data = new GLfloat[maxParticles * 4];
@@ -214,8 +214,8 @@ int main(int argc, char** argv)
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4, lodLevelMin, lodLevelMax);		
 		generateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), treeMaterial, physx);
 		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), flowerMaterial, physx);
-		particles.init(particleMaterial);
-		for (int i = 0; i < 100; i++) {
+		particles.init(particleMaterial, maxParticles);
+		for (int i = 0; i < maxParticles; i++) {
 			particleConatainer[i].life = -1.0f;
 			particleConatainer[i].cameradistance = -1.0f;
 		}
@@ -259,6 +259,7 @@ int main(int argc, char** argv)
 		physx::PxShape* temp;
 		std::shared_ptr<PhysxStaticEntity> latestCollision;
 		float boostCountdown = 0;
+
 		//--------------------Render loop----------------------
 		while (!glfwWindowShouldClose(window)) 
 		{
@@ -749,9 +750,11 @@ void generateParticles(float delta) {
 		particleConatainer[particleIndex].r = rand() % 256;
 		particleConatainer[particleIndex].g = rand() % 256;
 		particleConatainer[particleIndex].b = rand() % 256;
-		particleConatainer[particleIndex].a = (rand() % 256) / 3;
+		particleConatainer[particleIndex].a = 255;
 
-		particleConatainer[particleIndex].size = (rand() % 1000) / 2000.0f + 0.1f;
+		//std::cout << (int)particleConatainer[particleIndex].a << std::endl;
+
+		particleConatainer[particleIndex].size = 0.5;
 
 	}
 
@@ -779,7 +782,7 @@ int FindUnusedParticle() {
 
 void SortParticles() {
 	//sould be replaced with max_particle count
-	std::sort(&particleConatainer[0], &particleConatainer[100]);
+	std::sort(&particleConatainer[0], &particleConatainer[maxParticles]);
 }
 
 int simulateParticles(float delta) {

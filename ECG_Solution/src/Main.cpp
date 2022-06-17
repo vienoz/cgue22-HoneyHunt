@@ -85,12 +85,13 @@ std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
 std::vector<std::vector<int> > powerUpPos = { {30,-40}, {-10,40}, {-55,-20}, {-55,20}, {60,-70}, {35,20}, {-45,-10}, {-35,-25} };
 
 //Particlestorm
-const int maxParticles = 1000;
-Particle particleConatainer[maxParticles];
+int maxParticles = 100000;
+//thats's pretts shit
+Particle particleConatainer[100000];
 int LastUsedParticle = 0;
 ParticleHandler particles;
-static GLfloat* g_particule_position_size_data = new GLfloat[maxParticles * 4];
-static GLubyte* g_particule_color_data = new GLubyte[maxParticles * 4];
+GLfloat* g_particule_position_size_data;
+ GLubyte* g_particule_color_data ;
 
 bool hud = true;
 std::clock_t gameOverTime;
@@ -118,6 +119,7 @@ int main(int argc, char** argv)
 	float emissionIntensity =   float(reader.GetReal("rendering", "emissionIntensity", 0.1f));
 	float lodLevelMin =  float(reader.GetReal("rendering", "lod_distance_min", 1.0f));
 	float lodLevelMax =  float(reader.GetReal("rendering", "lod_distance_max", 1.0f));
+	maxParticles = reader.GetInteger("game", "particles", 1200);
 
 
 	// Create context
@@ -201,7 +203,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<BaseMaterial> flowerMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/flower_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<BaseMaterial> treeMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/tree_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<BaseMaterial> powerUpMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/powerUp_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
-		std::shared_ptr<TextureMaterial> particleMaterial = std::make_shared<TextureMaterial>(particleShader, AssetManager::getInstance()->getTexture("assets/textures/wood_texture.dds"));
+		std::shared_ptr<TextureMaterial> particleMaterial = std::make_shared<TextureMaterial>(particleShader, AssetManager::getInstance()->getTexture("assets/textures/particles.dds"));
 		auto defaultMaterial =	 AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
 		
 		// ----------------------------init static models--------------------
@@ -219,6 +221,8 @@ int main(int argc, char** argv)
 			particleConatainer[i].life = -1.0f;
 			particleConatainer[i].cameradistance = -1.0f;
 		}
+		g_particule_position_size_data = new GLfloat[maxParticles * 4];
+		g_particule_color_data = new GLubyte[maxParticles * 4];
 
 		//std::vector<string> plantModelPaths = { "assets/models/potted_plant_obj.obj", "assets/models/potted_plant_obj_02.obj", "assets/models/sphere.obj" };
 		//_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), physx, false, objType::Default)));
@@ -254,6 +258,8 @@ int main(int argc, char** argv)
 		float timePassed = 0.0f;
 		double mouse_x, mouse_y;
 		bool gameOver = false;
+
+		
 
 		bool insideCollShape = false;
 		physx::PxShape* temp;
@@ -295,6 +301,12 @@ int main(int argc, char** argv)
 				_octtree.draw(camera, dirL);
 				if(hud) text.drawText("current progess: " + std::to_string(counter), 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 				if(hud) text.drawText("countdown: " + std::to_string((int)(gameOverTime - timePassed)), 230.0f, 550.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+				
+				generateParticles(dt);
+				int count = simulateParticles(dt);
+				SortParticles();
+				particles.update(g_particule_position_size_data, g_particule_color_data, count);
+				particles.draw(camera);
 			}else {
 				//draw game over
 				if(hud) text.drawText("you scored: " + std::to_string(counter), 200.0f, 200.0f, 2.0f, glm::vec3(0.5, 0.8f, 0.2f));
@@ -343,12 +355,7 @@ int main(int argc, char** argv)
 			}
 	
 
-			//particle clusterfuck
-			generateParticles(dt);
-			int count = simulateParticles(dt);
-			SortParticles();
-			particles.update(g_particule_position_size_data, g_particule_color_data, count);
-			particles.draw(camera);
+			
 
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
@@ -731,7 +738,7 @@ void generateParticles(float delta) {
 	for (int i = 0; i < newparticles; i++) {
 		int particleIndex = FindUnusedParticle();
 		particleConatainer[particleIndex].life = 5.0f; // This particle will live 5 seconds.
-		particleConatainer[particleIndex].pos = glm::vec3(0, 0, -20.0f);
+		particleConatainer[particleIndex].pos = glm::vec3(0, 3, -22.0f);
 
 		float spread = 1.5f;
 		glm::vec3 maindir = glm::vec3(0.0f, 10.0f, 0.0f);
@@ -747,14 +754,10 @@ void generateParticles(float delta) {
 		particleConatainer[particleIndex].speed = maindir + randomdir * spread;
 
 		// Very bad way to generate a random color
-		particleConatainer[particleIndex].r = rand() % 256;
-		particleConatainer[particleIndex].g = rand() % 256;
-		particleConatainer[particleIndex].b = rand() % 256;
-		particleConatainer[particleIndex].a = 255;
 
 		//std::cout << (int)particleConatainer[particleIndex].a << std::endl;
 
-		particleConatainer[particleIndex].size = 0.5;
+		particleConatainer[particleIndex].size = 0.2;
 
 	}
 

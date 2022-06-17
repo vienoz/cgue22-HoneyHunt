@@ -57,8 +57,8 @@ void ParticleHandler::draw(Camera camera) {
 	_material->getShader()->setUniform(1, camera.getViewMatrix());
 	_material->getShader()->setUniform(2, camera.getProjMatrix());
 	_material->getShader()->setUniform(3, camera.getCameraRight());
-	//_material->getShader()->setUniform(4, camera.getCameraRight());
-	glm::vec3 camBack = glm::vec3(-camera.getCameraFoward().x, -camera.getCameraFoward().y, -camera.getCameraFoward().z);
+
+	glm::vec3 camBack = glm::vec3(-camera.getCameraFoward().x, 0, -camera.getCameraFoward().z);
 	_material->getShader()->setUniform(4, glm::normalize(glm::cross(camera.getCameraRight(), camBack)));
 
 	//glUniform1i(0, _material->getTexture()->_texHandle);

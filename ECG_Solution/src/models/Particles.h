@@ -27,7 +27,8 @@ private:
 struct Particle {
 	glm::vec3 pos;
 	glm::vec3 speed;
-	unsigned char r, g, b, a;
+
+	unsigned char r= 119, g= 187, b=255, a=130;
 	float size;
 	float angle;
 	float weight;

@@ -22,6 +22,7 @@
 #include "models/Model.h"
 #include "models/Entity.h"
 #include "models/Octtree.h"
+#include "models/Particles.h"
 
 
 /* --------------------------------------------- */
@@ -46,6 +47,10 @@ std::shared_ptr<PhysxDynamicEntity> InitDynamicEntity(string modelPath, std::sha
 
 void generateTrees(uint32_t count, glm::vec2 min, glm::vec2 max, std::shared_ptr<BaseMaterial> material, GamePhysx physx);
 void generateFlowers(uint32_t count, glm::vec2 min, glm::vec2 max, std::shared_ptr<BaseMaterial> material, GamePhysx physx);
+void generateParticles(float delta);
+int simulateParticles(float delta);
+void SortParticles();
+int FindUnusedParticle();
 void createFramebuffer(int width, int height, uint32_t& framebufferID, uint32_t& colorAttachmentID, uint32_t& depthAttachmentID);
 void updatePowerUpPosition(std::shared_ptr<PhysxStaticEntity> entity, float dx);
 bool interact();
@@ -79,6 +84,14 @@ std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
 std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
 std::vector<std::vector<int> > powerUpPos = { {30,-40}, {-10,40}, {-55,-20}, {-55,20}, {60,-70}, {35,20}, {-45,-10}, {-35,-25} };
 
+//Particlestorm
+Particle particleConatainer[100];
+int maxParticles = 100;
+int LastUsedParticle = 0;
+ParticleHandler particles;
+static GLfloat* g_particule_position_size_data = new GLfloat[maxParticles * 4];
+static GLubyte* g_particule_color_data = new GLubyte[maxParticles * 4];
+
 bool hud = true;
 std::clock_t gameOverTime;
 
@@ -89,6 +102,7 @@ std::clock_t gameOverTime;
 
 int main(int argc, char** argv)
 {
+
 	INIReader reader("assets/settings.ini");
 
 	std::string window_title = reader.Get("window", "title", "HoneyHero");
@@ -174,6 +188,8 @@ int main(int argc, char** argv)
 		auto woodShader =		 AssetManager::getInstance()->getShader("assets/shader/wood");
 		auto brightnessShader =  AssetManager::getInstance()->getShader("assets/shader/brightness");
 		auto finalShader =       AssetManager::getInstance()->getShader("assets/shader/final");
+		auto particleShader =    AssetManager::getInstance()->getShader("assets/shader/particle");
+
 		text.setUpShader(		 AssetManager::getInstance()->getShader("assets/shader/textShader"));
 		
 		finalShader->use();
@@ -185,6 +201,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<BaseMaterial> flowerMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/flower_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<BaseMaterial> treeMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/tree_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<BaseMaterial> powerUpMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/powerUp_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
+		std::shared_ptr<TextureMaterial> particleMaterial = std::make_shared<TextureMaterial>(particleShader, AssetManager::getInstance()->getTexture("assets/textures/wood_texture.dds"));
 		auto defaultMaterial =	 AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
 		
 		// ----------------------------init static models--------------------
@@ -197,6 +214,11 @@ int main(int argc, char** argv)
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4, lodLevelMin, lodLevelMax);		
 		generateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), treeMaterial, physx);
 		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), flowerMaterial, physx);
+		particles.init(particleMaterial);
+		for (int i = 0; i < 100; i++) {
+			particleConatainer[i].life = -1.0f;
+			particleConatainer[i].cameradistance = -1.0f;
+		}
 
 		//std::vector<string> plantModelPaths = { "assets/models/potted_plant_obj.obj", "assets/models/potted_plant_obj_02.obj", "assets/models/sphere.obj" };
 		//_octtree.insert(OcttreeNode(InitLodModel(plantModelPaths, defaultMaterial, glm::mat4(1), glm::vec3(0, 0, 0), physx, false, objType::Default)));
@@ -240,7 +262,6 @@ int main(int argc, char** argv)
 		//--------------------Render loop----------------------
 		while (!glfwWindowShouldClose(window)) 
 		{
-
 			// Compute frame time
 			dt = t;
 			t = float(glfwGetTime());
@@ -262,7 +283,6 @@ int main(int argc, char** argv)
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			glEnable(GL_DEPTH_TEST);
 			
-
 			// draw persitent
 			playerEntity->draw(camera, dirL);
 
@@ -320,6 +340,14 @@ int main(int argc, char** argv)
 				boostCountdown-= dt;
 				if (hud) text.drawText("boosted: " + std::to_string((int)boostCountdown), 550.0f, 25.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));
 			}
+	
+
+			//particle clusterfuck
+			generateParticles(dt);
+			int count = simulateParticles(dt);
+			SortParticles();
+			particles.update(g_particule_position_size_data, g_particule_color_data, count);
+			particles.draw(camera);
 
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
@@ -327,7 +355,7 @@ int main(int argc, char** argv)
 
 			physx.callback.collisionObj = NULL;
 			physx.callback.collisionShapes = NULL;
-			
+						
 			
 			// Bind the default framebuffer
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo2);
@@ -691,4 +719,109 @@ bool interact() {
 void updatePowerUpPosition(std::shared_ptr<PhysxStaticEntity> entity, float tx) {
 	physx::PxVec3 pos= entity->_rigidStatic->getGlobalPose().p;
 	entity->_rigidStatic->setGlobalPose(physx::PxTransform(physx::PxVec3(pos.x, 4*(sin(tx))+10, pos.z)));
+}
+
+void generateParticles(float delta) {
+
+	int newparticles = (int)(delta * 10000.0);
+	if (newparticles > (int)(0.016f * 10000.0))
+		newparticles = (int)(0.016f * 10000.0);
+
+	for (int i = 0; i < newparticles; i++) {
+		int particleIndex = FindUnusedParticle();
+		particleConatainer[particleIndex].life = 5.0f; // This particle will live 5 seconds.
+		particleConatainer[particleIndex].pos = glm::vec3(0, 0, -20.0f);
+
+		float spread = 1.5f;
+		glm::vec3 maindir = glm::vec3(0.0f, 10.0f, 0.0f);
+		// Very bad way to generate a random direction; 
+		// See for instance http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution instead,
+		// combined with some user-controlled parameters (main direction, spread, etc)
+		glm::vec3 randomdir = glm::vec3(
+			(rand() % 2000 - 1000.0f) / 1000.0f,
+			(rand() % 2000 - 1000.0f) / 1000.0f,
+			(rand() % 2000 - 1000.0f) / 1000.0f
+		);
+
+		particleConatainer[particleIndex].speed = maindir + randomdir * spread;
+
+		// Very bad way to generate a random color
+		particleConatainer[particleIndex].r = rand() % 256;
+		particleConatainer[particleIndex].g = rand() % 256;
+		particleConatainer[particleIndex].b = rand() % 256;
+		particleConatainer[particleIndex].a = (rand() % 256) / 3;
+
+		particleConatainer[particleIndex].size = (rand() % 1000) / 2000.0f + 0.1f;
+
+	}
+
+}
+
+int FindUnusedParticle() {
+
+
+	for(int i=LastUsedParticle; i< particles.max_particles; i++){
+		if (particleConatainer[i].life < 0){
+			LastUsedParticle = i;
+			return i;
+		}
+	}
+
+	for(int i=0; i<LastUsedParticle; i++){
+		if (particleConatainer[i].life < 0){
+			LastUsedParticle = i;
+			return i;
+		}
+	}
+
+	return 0; // All particles are taken, override the first one
+}
+
+void SortParticles() {
+	//sould be replaced with max_particle count
+	std::sort(&particleConatainer[0], &particleConatainer[100]);
+}
+
+int simulateParticles(float delta) {
+	int ParticlesCount = 0;
+	for (int i = 0; i < maxParticles; i++) {
+
+		Particle& p = particleConatainer[i]; // shortcut
+
+		if (p.life > 0.0f) {
+
+			// Decrease life
+			p.life -= delta;
+			if (p.life > 0.0f) {
+
+				// Simulate simple physics : gravity only, no collisions
+				p.speed += glm::vec3(0.0f, -9.81f, 0.0f) * (float)delta * 0.5f;
+				p.pos += p.speed * (float)delta;
+				//should be length2
+				p.cameradistance = glm::length(p.pos - camera.getPosition());
+				//ParticlesContainer[i].pos += glm::vec3(0.0f,10.0f, 0.0f) * (float)delta;
+
+				// Fill the GPU buffer
+				g_particule_position_size_data[4 * ParticlesCount + 0] = p.pos.x;
+				g_particule_position_size_data[4 * ParticlesCount + 1] = p.pos.y;
+				g_particule_position_size_data[4 * ParticlesCount + 2] = p.pos.z;
+
+				g_particule_position_size_data[4 * ParticlesCount + 3] = p.size;
+
+				g_particule_color_data[4 * ParticlesCount + 0] = p.r;
+				g_particule_color_data[4 * ParticlesCount + 1] = p.g;
+				g_particule_color_data[4 * ParticlesCount + 2] = p.b;
+				g_particule_color_data[4 * ParticlesCount + 3] = p.a;
+
+			}
+			else {
+				// Particles that just died will be put at the end of the buffer in SortParticles();
+				p.cameradistance = -1.0f;
+			}
+
+			ParticlesCount++;
+
+		}
+	}
+	return ParticlesCount;
 }

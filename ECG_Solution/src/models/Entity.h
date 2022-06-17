@@ -36,7 +36,6 @@ public:
     PhysxDynamicEntity(GamePhysx& physx, std::shared_ptr<Model> model, bool flower);
 };
 
-//TODO replace flower bool with enum for different geometries in scene
 class PhysxStaticEntity : public PhysxEntity {
 public: 
     objType objectType;

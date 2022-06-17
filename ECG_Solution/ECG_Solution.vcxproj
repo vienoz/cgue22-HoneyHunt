@@ -6,6 +6,7 @@
     <ClCompile Include="src\models\Mesh.cpp" />
     <ClCompile Include="src\models\Entity.cpp" />
     <ClCompile Include="src\models\Model.cpp" />
+    <ClCompile Include="src\models\Particles.cpp" />
     <ClCompile Include="src\rendering\Camera.cpp" />
     <ClCompile Include="src\GamePhysx.cpp" />
     <ClCompile Include="src\rendering\Light.cpp" />
@@ -21,6 +22,7 @@
     <ClInclude Include="src\models\Mesh.h" />
     <ClInclude Include="src\models\Entity.h" />
     <ClInclude Include="src\models\Model.h" />
+    <ClInclude Include="src\models\Particles.h" />
     <ClInclude Include="src\rendering\Camera.h" />
     <ClInclude Include="src\GamePhysx.h" />
     <ClInclude Include="src\INIReader.h" />

@@ -45,7 +45,7 @@ void GamePhysx::init() {
 	if (!gFoundation) throw ("failed to create PxCreateFoundation");
 
 	physx::PxTolerancesScale scale;
-	scale.length = 100;        // typical length of an object
+	scale.length = 40;        // typical length of an object
 	scale.speed = 981;         // typical speed of an object, gravity*1s is a reasonable choice
 
 	//gCooking = PxCreateCooking(PX_PHYSICS_VERSION, *gFoundation, PxCookingParams(scale));

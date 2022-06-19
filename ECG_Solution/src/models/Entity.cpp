@@ -195,6 +195,11 @@ PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, std::shared_ptr<Model> m
         rbStatic->setName("powerUp");
         physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxSphereGeometry(1.6), *gphysx.getMaterial());
     }
+    case objType::Hose : {
+        rbStatic->setName("garden hose");
+        physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxSphereGeometry(0.6), *gphysx.getMaterial());
+        //TODO create rigidstatic
+    }
     }
 
     

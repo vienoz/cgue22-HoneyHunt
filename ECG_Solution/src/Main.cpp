@@ -202,6 +202,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<BaseMaterial> groundMaterial =	std::make_shared<TextureMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/ground_texture.dds"));
 		std::shared_ptr<BaseMaterial> flowerMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/flower_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<BaseMaterial> treeMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/tree_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
+		std::shared_ptr<BaseMaterial> gardenHoseMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/hose_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<BaseMaterial> powerUpMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/powerUp_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<TextureMaterial> particleMaterial = std::make_shared<TextureMaterial>(particleShader, AssetManager::getInstance()->getTexture("assets/textures/particles.dds"));
 		auto defaultMaterial =	 AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
@@ -212,11 +213,13 @@ int main(int argc, char** argv)
 		std::shared_ptr<PhysxStaticEntity> stumpEntity = InitStaticEntity("assets/models/treeStump.obj", woodMaterial, glm::mat4(1), glm::vec3(30, 0, 0), physx, false, objType::Stump);
 		std::shared_ptr<PhysxStaticEntity> powerUpEntity = InitStaticEntity("assets/models/powerUp.obj", powerUpMaterial, glm::mat4(1), glm::vec3(0, 0, -65), physx, false, objType::PowerUp);
 
+
 		// ----------------------------init dynamic(LOD) models--------------
 		_octtree = Octtree(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1000.0f, 100.0f, 1000.0f), 4, lodLevelMin, lodLevelMax);		
 		generateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), treeMaterial, physx);
 		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), flowerMaterial, physx);
 		particles.init(particleMaterial, maxParticles);
+		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/gardenHose.obj", "assets/models/gardenHose_LOD1.obj"}, gardenHoseMaterial, glm::mat4(1), glm::vec3(10, 0, 0), physx, false, objType::Hose)));
 		for (int i = 0; i < maxParticles; i++) {
 			particleConatainer[i].life = -1.0f;
 			particleConatainer[i].cameradistance = -1.0f;

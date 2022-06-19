@@ -6,7 +6,7 @@
 #include "Model.h"
 
 
-enum class objType { Tree, Flower, Stump, Bee, Ground, Default, PowerUp, Hive, Fence }; //used for generating appropriate physx actor
+enum class objType { Tree, Flower, Stump, Bee, Ground, Default, PowerUp, Hive, Fence, Hose }; //used for generating appropriate physx actor
 
 class PhysxEntity
 {

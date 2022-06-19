@@ -52,7 +52,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON                    "C:\\Users\\niclas\\OneDrive\\Dokumente\\TU\\SS22\\CG\\SS22\\template\\assets\\textures\\favicon.ico"
+IDI_ICON1               ICON                    "..\\assets\\textures\\favicon.ico"
 
 #endif    // English (United Kingdom) resources
 /////////////////////////////////////////////////////////////////////////////

@@ -219,7 +219,7 @@ int main(int argc, char** argv)
 		generateTrees(18, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f,100.0f), treeMaterial, physx);
 		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), flowerMaterial, physx);
 		particles.init(particleMaterial, maxParticles);
-		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/gardenHose.obj", "assets/models/gardenHose_LOD1.obj"}, gardenHoseMaterial, glm::mat4(1), glm::vec3(10, 0, 0), physx, false, objType::Hose)));
+		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/gardenHose.obj", "assets/models/gardenHose_LOD1.obj"}, gardenHoseMaterial, glm::mat4(1), glm::vec3(-7, 0, -9.5), physx, false, objType::Hose)));
 		for (int i = 0; i < maxParticles; i++) {
 			particleConatainer[i].life = -1.0f;
 			particleConatainer[i].cameradistance = -1.0f;
@@ -740,7 +740,7 @@ void generateParticles(float delta) {
 
 	for (int i = 0; i < newparticles; i++) {
 		int particleIndex = FindUnusedParticle();
-		particleConatainer[particleIndex].life = 5.0f; // This particle will live 5 seconds.
+		particleConatainer[particleIndex].life = 5.0f; 
 		particleConatainer[particleIndex].pos = glm::vec3(0, 3, -22.0f);
 
 		float spread = 1.5f;

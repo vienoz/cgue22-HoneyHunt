@@ -34,7 +34,7 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-glm::vec3 updateMovement(float dt);
+glm::vec3 updateMovement();
 
 LODModel InitLodModel(std::vector<string> modelPaths, std::shared_ptr<BaseMaterial> material,
 	glm::mat4 rotation, glm::vec3 position, GamePhysx physx, bool flower, objType type);
@@ -91,7 +91,8 @@ Particle particleConatainer[100000];
 int LastUsedParticle = 0;
 ParticleHandler particles;
 GLfloat* g_particule_position_size_data;
- GLubyte* g_particule_color_data ;
+GLubyte* g_particule_color_data ;
+float speedMultiplier = 1.0f;
 
 bool hud = true;
 std::clock_t gameOverTime;
@@ -368,17 +369,16 @@ int main(int argc, char** argv)
 				boostCountdown-= dt;
 				if (hud) text.drawText("boosted: " + std::to_string((int)boostCountdown), 550.0f, 25.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));
 			}
+			speedMultiplier = boostCountdown > 0 ? 1.8 : 1;
+			physx.callback.collisionObj = NULL;
+			physx.callback.collisionShapes = NULL;
 	
-
 
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
-			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, boostCountdown>0 ? updateMovement(1.8) : updateMovement(1));
+			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, updateMovement());
 
-			physx.callback.collisionObj = NULL;
-			physx.callback.collisionShapes = NULL;
-						
-			
+		
 			// Bind the default framebuffer
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo2);
 			brightnessShader->use();
@@ -687,8 +687,8 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 
 glm::vec3 updateMovement() {
 	glm::vec3 newDirection = glm::normalize(camera.getCameraFoward());
-	float mSpeedX = 8;
-	float mSpeedY = 5;
+	float mSpeedX = 8 * speedMultiplier;
+	float mSpeedY = 5 * speedMultiplier;
 	
 	float playerDirection = atan2(newDirection.x , newDirection.z);
 	glm::vec2 cFoward = glm::normalize(glm::vec2(camera.getCameraFoward().x, camera.getCameraFoward().z));

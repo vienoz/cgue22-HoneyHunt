@@ -777,7 +777,6 @@ void generateParticles(float delta) {
 		);
 
 		particleContainer[particleIndex].speed = maindir + randomdir * spread;
-
 		particleContainer[particleIndex].size = size(rng);
 
 	}

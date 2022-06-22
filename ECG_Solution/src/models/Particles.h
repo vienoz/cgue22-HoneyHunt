@@ -28,8 +28,6 @@ struct Particle {
 	glm::vec3 speed;
 
 	float size;
-	float angle;
-	float weight;
 	float life;
 	float cameradistance;
 

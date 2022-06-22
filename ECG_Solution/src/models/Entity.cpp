@@ -197,7 +197,15 @@ PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, std::shared_ptr<Model> m
     }
     case objType::Hose : {
         rbStatic->setName("garden hose");
-        physx::PxShape* aBoxShape = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxSphereGeometry(0.6), *gphysx.getMaterial());
+        physx::PxShape* base  = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, physx::PxBoxGeometry(0.5, 9, 0.5), *gphysx.getMaterial());
+        base->setLocalPose(physx::PxTransform(physx::PxVec3(-2.0, 0, -2.0)));
+
+        physx::PxShape* hose = gphysx.getPhysics()->createShape(physx::PxBoxGeometry(0.5, 9, 0.5), *gphysx.getMaterial(), true);
+        hose->setLocalPose(physx::PxTransform(physx::PxVec3(0.3, 0, -5.0)));
+ 
+        rbStatic->attachShape(*hose);
+        
+
         //TODO create rigidstatic
     }
     }

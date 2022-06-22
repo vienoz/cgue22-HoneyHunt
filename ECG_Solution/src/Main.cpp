@@ -220,6 +220,10 @@ int main(int argc, char** argv)
 		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), flowerMaterial, physx);
 		particles.init(particleMaterial, maxParticles);
 		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/gardenHose.obj", "assets/models/gardenHose_LOD1.obj"}, gardenHoseMaterial, glm::mat4(1), glm::vec3(-7, 0, -9.5), physx, false, objType::Hose)));
+		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fence.obj"}, woodMaterial, glm::mat4(1), glm::vec3(-70, 0, 86), physx, false, objType::Default)));
+		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fence.obj"}, gardenHoseMaterial, glm::mat4(1), glm::vec3(-70, 0, -86), physx, false, objType::Default)));
+		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fenceSide.obj"}, gardenHoseMaterial, glm::mat4(1), glm::vec3(-71, 0, -86), physx, false, objType::Default)));
+		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fenceSide.obj"}, gardenHoseMaterial, glm::mat4(1), glm::vec3(101, 0, -86), physx, false, objType::Default)));
 		for (int i = 0; i < maxParticles; i++) {
 			particleConatainer[i].life = -1.0f;
 			particleConatainer[i].cameradistance = -1.0f;
@@ -362,7 +366,7 @@ int main(int argc, char** argv)
 
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
-			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, boostCountdown>0 ? updateMovement(dt*1.8) : updateMovement(dt));
+			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, boostCountdown>0 ? updateMovement(1.8) : updateMovement(1));
 
 			physx.callback.collisionObj = NULL;
 			physx.callback.collisionShapes = NULL;
@@ -674,11 +678,10 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 	return stringStream.str();
 }
 
-//TODO: add slight pitch when moving forward, by adding quaternions?
 glm::vec3 updateMovement(float dt) {
 	glm::vec3 newDirection = glm::normalize(camera.getCameraFoward());
-	float mSpeed = dt * 500;
-	float mSpeedY = dt * 250;
+	float mSpeed = dt * 8;
+	float mSpeedY =  5;
 	
 	float playerDirection = atan2(newDirection.x , newDirection.z);
 	glm::vec2 cFoward = glm::normalize(glm::vec2(camera.getCameraFoward().x, camera.getCameraFoward().z));

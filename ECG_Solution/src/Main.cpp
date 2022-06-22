@@ -272,6 +272,8 @@ int main(int argc, char** argv)
 		physx::PxShape* temp;
 		std::shared_ptr<PhysxStaticEntity> latestCollision;
 		float boostCountdown = 0;
+		float physicsTimeRemaining = 0;
+		float physicsTimeStep = 1.0f / 60.0f;
 
 		//--------------------Render loop----------------------
 		while (!glfwWindowShouldClose(window)) 
@@ -281,15 +283,20 @@ int main(int argc, char** argv)
 			t = float(glfwGetTime());
 			dt = t - dt;
 			timePassed += dt;
+			physicsTimeRemaining += dt;
 			++ticks;
 
 			//check win condition
 			if (gameOverTime - timePassed <= 0)
 				gameOver = true;
 
+
 			//simulate physx
-			physx.getScene()->simulate(dt);
-			physx.getScene()->fetchResults(true);
+			while (physicsTimeRemaining >= physicsTimeStep) {
+				physicsTimeRemaining -= physicsTimeStep;
+				physx.getScene()->simulate(physicsTimeStep);
+				physx.getScene()->fetchResults(true);
+			}
 
 			//render buffer setup 
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -362,7 +369,6 @@ int main(int argc, char** argv)
 			}
 	
 
-			
 
 			// Update camera
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
@@ -678,32 +684,32 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 	return stringStream.str();
 }
 
-glm::vec3 updateMovement(float dt) {
+glm::vec3 updateMovement() {
 	glm::vec3 newDirection = glm::normalize(camera.getCameraFoward());
-	float mSpeed = dt * 8;
-	float mSpeedY =  5;
+	float mSpeedX = 8;
+	float mSpeedY = 5;
 	
 	float playerDirection = atan2(newDirection.x , newDirection.z);
 	glm::vec2 cFoward = glm::normalize(glm::vec2(camera.getCameraFoward().x, camera.getCameraFoward().z));
 	glm::vec3 cRight = glm::normalize(camera.getCameraRight());
 
 	if (keys[GLFW_KEY_W]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed *-cFoward.x, 0 , mSpeed * -cFoward.y), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeedX *-cFoward.x, 0 , mSpeedX * -cFoward.y), true);
 	}
 	if (keys[GLFW_KEY_A]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed * -cRight.x, mSpeed * -cRight.y, mSpeed * -cRight.z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeedX * -cRight.x, mSpeedX * -cRight.y, mSpeedX * -cRight.z), true);
 	}
 	if (keys[GLFW_KEY_W] && keys[GLFW_KEY_A]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed * (-cRight.x + -cFoward.x), 0, mSpeed * (-cRight.z + -cFoward.y)), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeedX * (-cRight.x + -cFoward.x), 0, mSpeedX * (-cRight.z + -cFoward.y)), true);
 	}
 	if (keys[GLFW_KEY_S]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed * cFoward.x, 0, mSpeed * cFoward.y), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeedX * cFoward.x, 0, mSpeedX * cFoward.y), true);
 	}
 	if (keys[GLFW_KEY_D]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed * cRight.x, mSpeed * cRight.y, mSpeed * cRight.z), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeedX * cRight.x, mSpeedX * cRight.y, mSpeedX * cRight.z), true);
 	}
 	if (keys[GLFW_KEY_W] && keys[GLFW_KEY_D]) {
-		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeed * (cRight.x + -cFoward.x), 0, mSpeed * (cRight.z + -cFoward.y)), true);
+		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(mSpeedX * (cRight.x + -cFoward.x), 0, mSpeedX * (cRight.z + -cFoward.y)), true);
 	}
 	if (keys[GLFW_KEY_SPACE]) {
 		playerEntity->getPhysxActor()->setLinearVelocity(physx::PxVec3(playerEntity->getPhysxActor()->getLinearVelocity().x, mSpeedY, playerEntity->getPhysxActor()->getLinearVelocity().z), true);

@@ -84,10 +84,9 @@ std::vector<std::shared_ptr<PhysxStaticEntity> > collisionStatics;
 std::vector<std::shared_ptr<PhysxStaticEntity> > normalStatics;
 std::vector<std::vector<int> > powerUpPos = { {30,-40}, {-10,40}, {-55,-20}, {-55,20}, {60,-70}, {35,20}, {-45,-10}, {-35,-25} };
 
-//Particlestorm
-int maxParticles = 100000;
-//thats's pretts shit
-Particle particleConatainer[100000];
+//Particleparty
+int maxParticles;
+Particle* particleContainer;
 int LastUsedParticle = 0;
 ParticleHandler particles;
 GLfloat* g_particule_position_size_data;
@@ -120,7 +119,7 @@ int main(int argc, char** argv)
 	float emissionIntensity =   float(reader.GetReal("rendering", "emissionIntensity", 0.1f));
 	float lodLevelMin =  float(reader.GetReal("rendering", "lod_distance_min", 1.0f));
 	float lodLevelMax =  float(reader.GetReal("rendering", "lod_distance_max", 1.0f));
-	maxParticles = reader.GetInteger("game", "particles", 1200);
+	maxParticles = reader.GetInteger("game", "particles", 600);
 
 
 	// Create context
@@ -226,9 +225,10 @@ int main(int argc, char** argv)
 		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fence.obj"}, fenceMaterial, glm::mat4(1), glm::vec3(-70, 0, -86), physx, false, objType::Default)));
 		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fenceSide.obj"}, fenceMaterial, glm::mat4(1), glm::vec3(-71, 0, -86), physx, false, objType::Default)));
 		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fenceSide.obj"}, fenceMaterial, glm::mat4(1), glm::vec3(101, 0, -86), physx, false, objType::Default)));
+		particleContainer = new Particle[maxParticles];
 		for (int i = 0; i < maxParticles; i++) {
-			particleConatainer[i].life = -1.0f;
-			particleConatainer[i].cameradistance = -1.0f;
+			particleContainer[i].life = -1.0f;
+			particleContainer[i].cameradistance = -1.0f;
 		}
 		g_particule_position_size_data = new GLfloat[maxParticles * 4];
 		g_particule_color_data = new GLubyte[maxParticles * 4];
@@ -750,8 +750,8 @@ void generateParticles(float delta) {
 
 	for (int i = 0; i < newparticles; i++) {
 		int particleIndex = FindUnusedParticle();
-		particleConatainer[particleIndex].life = 5.0f; 
-		particleConatainer[particleIndex].pos = glm::vec3(0, 3, -22.0f);
+		particleContainer[particleIndex].life = 5.0f;
+		particleContainer[particleIndex].pos = glm::vec3(0, 3, -22.0f);
 
 		float spread = 1.5f;
 		glm::vec3 maindir = glm::vec3(0.0f, 10.0f, 0.0f);
@@ -764,9 +764,9 @@ void generateParticles(float delta) {
 			(rand() % 2000 - 1000.0f) / 1000.0f
 		);
 
-		particleConatainer[particleIndex].speed = maindir + randomdir * spread;
+		particleContainer[particleIndex].speed = maindir + randomdir * spread;
 
-		particleConatainer[particleIndex].size = 0.2;
+		particleContainer[particleIndex].size = 0.2;
 
 	}
 
@@ -776,14 +776,14 @@ int FindUnusedParticle() {
 
 
 	for(int i=LastUsedParticle; i< particles.max_particles; i++){
-		if (particleConatainer[i].life < 0){
+		if (particleContainer[i].life < 0){
 			LastUsedParticle = i;
 			return i;
 		}
 	}
 
 	for(int i=0; i<LastUsedParticle; i++){
-		if (particleConatainer[i].life < 0){
+		if (particleContainer[i].life < 0){
 			LastUsedParticle = i;
 			return i;
 		}
@@ -794,14 +794,14 @@ int FindUnusedParticle() {
 
 void SortParticles() {
 	//sould be replaced with max_particle count
-	std::sort(&particleConatainer[0], &particleConatainer[maxParticles]);
+	std::sort(&particleContainer[0], &particleContainer[maxParticles]);
 }
 
 int simulateParticles(float delta) {
 	int ParticlesCount = 0;
 	for (int i = 0; i < maxParticles; i++) {
 
-		Particle& p = particleConatainer[i]; // shortcut
+		Particle& p = particleContainer[i]; // shortcut
 
 		if (p.life > 0.0f) {
 

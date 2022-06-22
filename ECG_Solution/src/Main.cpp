@@ -204,6 +204,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<BaseMaterial> treeMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/tree_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<BaseMaterial> gardenHoseMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/hose_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<BaseMaterial> powerUpMaterial =	std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/powerUp_texture.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
+		std::shared_ptr<BaseMaterial> fenceMaterial = std::make_shared<CelShadedMaterial>(celShader, AssetManager::getInstance()->getTexture("assets/textures/fence.dds"), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f);
 		std::shared_ptr<TextureMaterial> particleMaterial = std::make_shared<TextureMaterial>(particleShader, AssetManager::getInstance()->getTexture("assets/textures/particles.dds"));
 		auto defaultMaterial =	 AssetManager::getInstance()->defaultMaterial = std::make_shared<BaseMaterial>(celShader);
 		
@@ -220,10 +221,10 @@ int main(int argc, char** argv)
 		generateFlowers(37, glm::vec2(0.0f, 0.0f), glm::vec2(100.0f, 100.0f), flowerMaterial, physx);
 		particles.init(particleMaterial, maxParticles);
 		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/gardenHose.obj", "assets/models/gardenHose_LOD1.obj"}, gardenHoseMaterial, glm::mat4(1), glm::vec3(-7, 0, -9.5), physx, false, objType::Hose)));
-		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fence.obj"}, woodMaterial, glm::mat4(1), glm::vec3(-70, 0, 86), physx, false, objType::Default)));
-		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fence.obj"}, gardenHoseMaterial, glm::mat4(1), glm::vec3(-70, 0, -86), physx, false, objType::Default)));
-		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fenceSide.obj"}, gardenHoseMaterial, glm::mat4(1), glm::vec3(-71, 0, -86), physx, false, objType::Default)));
-		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fenceSide.obj"}, gardenHoseMaterial, glm::mat4(1), glm::vec3(101, 0, -86), physx, false, objType::Default)));
+		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fence.obj"}, fenceMaterial, glm::mat4(1), glm::vec3(-70, 0, 86), physx, false, objType::Default)));
+		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fence.obj"}, fenceMaterial, glm::mat4(1), glm::vec3(-70, 0, -86), physx, false, objType::Default)));
+		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fenceSide.obj"}, fenceMaterial, glm::mat4(1), glm::vec3(-71, 0, -86), physx, false, objType::Default)));
+		_octtree.insert(OcttreeNode(InitLodModel(std::vector<string> {"assets/models/fenceSide.obj"}, fenceMaterial, glm::mat4(1), glm::vec3(101, 0, -86), physx, false, objType::Default)));
 		for (int i = 0; i < maxParticles; i++) {
 			particleConatainer[i].life = -1.0f;
 			particleConatainer[i].cameradistance = -1.0f;

@@ -205,19 +205,8 @@ PhysxStaticEntity::PhysxStaticEntity(GamePhysx& gphysx, std::shared_ptr<Model> m
  
         rbStatic->attachShape(*hose);
         
-
-        //TODO create rigidstatic
     }
     }
-
-    
-    /* // dynamic mesh cooking
-    physx::PxTriangleMeshCookingResult::Enum result;
-    auto pxMesh = model->getMeshes()->at(i)->createPxMesh(gphysx);
-    physx::PxMeshScale scale( physx::PxVec3(1,1,1),  physx::PxQuat(physx::PxIdentity));
-    physx::PxTriangleMeshGeometry geom(pxMesh, scale);
-    physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*rbStatic, geom ,*gphysx.getMaterial());
-    */
 
     rbStatic->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, false);
     _rigidStatic = rbStatic;

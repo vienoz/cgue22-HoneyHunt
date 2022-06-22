@@ -766,10 +766,6 @@ void generateParticles(float delta) {
 
 		particleConatainer[particleIndex].speed = maindir + randomdir * spread;
 
-		// Very bad way to generate a random color
-
-		//std::cout << (int)particleConatainer[particleIndex].a << std::endl;
-
 		particleConatainer[particleIndex].size = 0.2;
 
 	}

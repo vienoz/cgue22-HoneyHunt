@@ -15,12 +15,11 @@ public:
 	std::shared_ptr<TextureMaterial> _material;
 	int max_particles;
 	void init(std::shared_ptr<TextureMaterial> material, float maxPart);
-	void update(float* position_size_data, unsigned char* color_data, int pCount);
+	void update(float* position_size_data, int pCount);
 	void draw(Camera camera);
 private:
 	unsigned int vertex_buffer;
 	unsigned int position_buffer;
-	unsigned int color_buffer;
 	unsigned int vao_Handle;
 };
 
@@ -28,7 +27,6 @@ struct Particle {
 	glm::vec3 pos;
 	glm::vec3 speed;
 
-	unsigned char r= 119, g= 187, b=255, a=130;
 	float size;
 	float angle;
 	float weight;
@@ -36,7 +34,6 @@ struct Particle {
 	float cameradistance;
 
 	bool operator<(const Particle& that) const {
-		// Sort in reverse order : far particles drawn first.
 		return this->cameradistance > that.cameradistance;
 	}
 };

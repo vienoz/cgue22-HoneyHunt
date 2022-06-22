@@ -6,7 +6,6 @@
 // Codename HoneyHero Polygonal Engine Copyright 2022 Julia Hofmann :)
 
 #include <sstream>
-#include <math.h> 
 #include "Utils.h"
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
@@ -23,6 +22,7 @@
 #include "models/Entity.h"
 #include "models/Octtree.h"
 #include "models/Particles.h"
+#include <random>
 
 
 /* --------------------------------------------- */
@@ -321,7 +321,7 @@ int main(int argc, char** argv)
 				generateParticles(dt);
 				int count = simulateParticles(dt);
 				SortParticles();
-				particles.update(g_particule_position_size_data, g_particule_color_data, count);
+				particles.update(g_particule_position_size_data, count);
 				particles.draw(camera);
 			}else {
 				//draw game over
@@ -754,19 +754,31 @@ void generateParticles(float delta) {
 		particleContainer[particleIndex].pos = glm::vec3(0, 3, -22.0f);
 
 		float spread = 1.5f;
-		glm::vec3 maindir = glm::vec3(0.0f, 10.0f, 0.0f);
-		// Very bad way to generate a random direction; 
-		// See for instance http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution instead,
-		// combined with some user-controlled parameters (main direction, spread, etc)
+		glm::vec3 maindir = glm::vec3(0.5f, 10.0f, -0.5f);
+	
+		std::random_device rd;
+		std::mt19937 rng(rd());
+		std::uniform_real_distribution<> phiR(0, 1);
+		std::uniform_real_distribution<> cosR(0, 2);
+		std::uniform_real_distribution<> size(0.1, 0.2);
+		
+		float phi = phiR(rng) * 2 * M_PI;
+		float costheta = cosR(rng) - 1;
+		float u = phiR(rng);
+
+		float theta = acos(costheta);
+		float r = 1 * sqrt(u);
+
+
 		glm::vec3 randomdir = glm::vec3(
-			(rand() % 2000 - 1000.0f) / 1000.0f,
-			(rand() % 2000 - 1000.0f) / 1000.0f,
-			(rand() % 2000 - 1000.0f) / 1000.0f
+			r * sin(theta) * cos(phi),
+			r * sin(theta) * sin(phi),
+			r * cos(theta)
 		);
 
 		particleContainer[particleIndex].speed = maindir + randomdir * spread;
 
-		particleContainer[particleIndex].size = 0.2;
+		particleContainer[particleIndex].size = size(rng);
 
 	}
 
@@ -789,11 +801,10 @@ int FindUnusedParticle() {
 		}
 	}
 
-	return 0; // All particles are taken, override the first one
+	return 0; 
 }
 
 void SortParticles() {
-	//sould be replaced with max_particle count
 	std::sort(&particleContainer[0], &particleContainer[maxParticles]);
 }
 
@@ -801,36 +812,25 @@ int simulateParticles(float delta) {
 	int ParticlesCount = 0;
 	for (int i = 0; i < maxParticles; i++) {
 
-		Particle& p = particleContainer[i]; // shortcut
+		Particle& p = particleContainer[i]; 
 
 		if (p.life > 0.0f) {
 
-			// Decrease life
 			p.life -= delta;
 			if (p.life > 0.0f) {
 
-				// Simulate simple physics : gravity only, no collisions
 				p.speed += glm::vec3(0.0f, -9.81f, 0.0f) * (float)delta * 0.5f;
 				p.pos += p.speed * (float)delta;
-				//should be length2
 				p.cameradistance = glm::length(p.pos - camera.getPosition());
-				//ParticlesContainer[i].pos += glm::vec3(0.0f,10.0f, 0.0f) * (float)delta;
 
-				// Fill the GPU buffer
 				g_particule_position_size_data[4 * ParticlesCount + 0] = p.pos.x;
 				g_particule_position_size_data[4 * ParticlesCount + 1] = p.pos.y;
 				g_particule_position_size_data[4 * ParticlesCount + 2] = p.pos.z;
 
 				g_particule_position_size_data[4 * ParticlesCount + 3] = p.size;
 
-				g_particule_color_data[4 * ParticlesCount + 0] = p.r;
-				g_particule_color_data[4 * ParticlesCount + 1] = p.g;
-				g_particule_color_data[4 * ParticlesCount + 2] = p.b;
-				g_particule_color_data[4 * ParticlesCount + 3] = p.a;
-
 			}
 			else {
-				// Particles that just died will be put at the end of the buffer in SortParticles();
 				p.cameradistance = -1.0f;
 			}
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <iostream>
+#include <math.h> 
 #include <Windows.h>
 #include <memory>
 #include <GL\glew.h>
@@ -26,6 +27,7 @@
 #define FOURCC_DXT1	MAKEFOURCC('D', 'X', 'T', '1')
 #define FOURCC_DXT3	MAKEFOURCC('D', 'X', 'T', '3')
 #define FOURCC_DXT5	MAKEFOURCC('D', 'X', 'T', '5')
+#define _USE_MATH_DEFINES
 
 /*!
  * A loaded '.dss' image

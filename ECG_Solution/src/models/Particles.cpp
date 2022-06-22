@@ -22,25 +22,44 @@ void ParticleHandler::init(std::shared_ptr<TextureMaterial> material, float maxP
 	
 	glGenBuffers(1, &position_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
-	// Initialize with empty (NULL) buffer : it will be updated later, each frame.
+	
 	glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
 
-	
-	glGenBuffers(1, &color_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
-	// Initialize with empty (NULL) buffer : it will be updated later, each frame.
-	glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
+
+
+	// vertices of particle
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER,vertex_buffer);
+	glVertexAttribPointer(
+		0,
+		3, // size
+		GL_FLOAT, // type
+		GL_FALSE, // normalized?
+		3 * sizeof(float), // stride
+		(void*)0 // array buffer offset
+	);
+
+	//positions of particles' centers
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
+	glVertexAttribPointer(
+		1,
+		4, 
+		GL_FLOAT, 
+		GL_FALSE, 
+		4 * sizeof(float), 
+		(void*)0 
+	);
+
+	glVertexAttribDivisor(0, 0); 
+	glVertexAttribDivisor(1, 1); 
 }
 
-void ParticleHandler::update(float* position_size_data, unsigned char* color_data, int pCount) {
+void ParticleHandler::update(float* position_size_data, int pCount) {
 	particle_count = pCount;
 	glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
-	glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
+	glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // buffer orphaning
 	glBufferSubData(GL_ARRAY_BUFFER, 0, particle_count * sizeof(GLfloat) * 4, position_size_data);
-
-	glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
-	glBufferData(GL_ARRAY_BUFFER, max_particles * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
-	glBufferSubData(GL_ARRAY_BUFFER, 0, particle_count * sizeof(GLubyte) * 4, color_data);
 }
 
 void ParticleHandler::draw(Camera camera) {
@@ -60,47 +79,6 @@ void ParticleHandler::draw(Camera camera) {
 
 	glm::vec3 camBack = glm::vec3(-camera.getCameraFoward().x, 0, -camera.getCameraFoward().z);
 	_material->getShader()->setUniform(4, glm::normalize(glm::cross(camera.getCameraRight(), camBack)));
-
-	//glUniform1i(0, _material->getTexture()->_texHandle);
-
-	// 1rst attribute buffer : vertices
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER,vertex_buffer);
-	glVertexAttribPointer(
-		0, // attribute. No particular reason for 0, but must match the layout in the shader.
-		3, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		0, // stride
-		(void*)0 // array buffer offset
-	);
-
-	// 2nd attribute buffer : positions of particles' centers
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
-	glVertexAttribPointer(
-		1, // attribute. No particular reason for 1, but must match the layout in the shader.
-		4, // size : x + y + z + size => 4
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		0, // stride
-		(void*)0 // array buffer offset
-	);
-
-	// 3rd attribute buffer : particles' colors
-	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
-	glVertexAttribPointer(
-		2, // attribute. No particular reason for 1, but must match the layout in the shader.
-		4, // size : r + g + b + a => 4
-		GL_UNSIGNED_BYTE, // type
-		GL_TRUE, // normalized? *** YES, this means that the unsigned char[4] will be accessible with a vec4 (floats) in the shader ***
-		0, // stride
-		(void*)0 // array buffer offset
-	);
-	glVertexAttribDivisor(0, 0); // particles vertices : always reuse the same 4 vertices -> 0
-	glVertexAttribDivisor(1, 1); // positions : one per quad (its center) -> 1
-	glVertexAttribDivisor(2, 1);
 
 	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, particle_count);
 }

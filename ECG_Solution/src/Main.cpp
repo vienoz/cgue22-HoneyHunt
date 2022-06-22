@@ -294,7 +294,9 @@ int main(int argc, char** argv)
 
 
 			//simulate physx
+			int steps = 0;
 			while (physicsTimeRemaining >= physicsTimeStep) {
+				steps++;
 				physicsTimeRemaining -= physicsTimeStep;
 				physx.getScene()->simulate(physicsTimeStep);
 				physx.getScene()->fetchResults(true);
@@ -318,8 +320,8 @@ int main(int argc, char** argv)
 				if(hud) text.drawText("current progess: " + std::to_string(counter), 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 				if(hud) text.drawText("countdown: " + std::to_string((int)(gameOverTime - timePassed)), 230.0f, 550.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 				
-				generateParticles(dt);
-				int count = simulateParticles(dt);
+				generateParticles(steps * physicsTimeStep);
+				int count = simulateParticles(steps * physicsTimeStep);
 				SortParticles();
 				particles.update(g_particule_position_size_data, count);
 				particles.draw(camera);
@@ -366,7 +368,7 @@ int main(int argc, char** argv)
 				updatePowerUpPosition(powerUpEntity, timePassed);
 			}
 			if (boostCountdown > 0) {
-				boostCountdown-= dt;
+				boostCountdown-= steps * physicsTimeStep;
 				if (hud) text.drawText("boosted: " + std::to_string((int)boostCountdown), 550.0f, 25.0f, 1.0f, glm::vec3(1.0, 0.12f, 0.3f));
 			}
 			speedMultiplier = boostCountdown > 0 ? 1.8 : 1;
@@ -688,7 +690,7 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 glm::vec3 updateMovement() {
 	glm::vec3 newDirection = glm::normalize(camera.getCameraFoward());
 	float mSpeedX = 8 * speedMultiplier;
-	float mSpeedY = 5 * speedMultiplier;
+	float mSpeedY = 4 * speedMultiplier;
 	
 	float playerDirection = atan2(newDirection.x , newDirection.z);
 	glm::vec2 cFoward = glm::normalize(glm::vec2(camera.getCameraFoward().x, camera.getCameraFoward().z));
